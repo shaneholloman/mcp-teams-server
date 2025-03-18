@@ -1,0 +1,41 @@
+[project]
+name = "mcp-teams-server"
+version = "0.1.0"
+description = "An MCP server implementation for Microsoft Teams integration"
+readme = "README.md"
+keywords = ["mcp", "llm", "automation", "Microsoft Teams"]
+authors = [{ name = "Industria de Diseño Textil S.A." }]
+maintainers = [
+    { name = "Mariano Alonso Ortiz", email = "marianoao@inditex.com" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "aiohttp>=3.11.13",
+    "asyncio>=3.4.3",
+    "botbuilder-core>=4.16.2",
+    "cookiecutter==1.7.0",
+    "dotenv>=0.9.9",
+    "mcp[cli]>=1.4.1",
+]
+
+[project.scripts]
+mcp-teams-server = "mcp_teams_server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+# addopts = "-v --tb=short --cov=mcp_teams_server"
+addopts = "-v --tb=short --import-mode=importlib"
+asyncio_mode = "auto"
