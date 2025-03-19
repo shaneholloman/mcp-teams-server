@@ -4,8 +4,7 @@ An MCP (Model Context Protocol) server implementation for Microsoft Teams integr
 
 ## Features
 
-- List Teams channels
-- Start threads in channels with title and contents
+- Start threads in channel with title and contents
 - Update existing threads with messages
 - Mention users in threads
 - Read thread replies
