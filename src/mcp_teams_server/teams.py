@@ -14,9 +14,25 @@ from msgraph import GraphServiceClient
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
 from msrest.exceptions import HttpOperationError
+from pydantic import BaseModel
 
 LOGGER = logging.getLogger(__name__)
 
+
+class TeamsThread(BaseModel):
+    thread_id: str
+    title: str
+    content: str
+
+class TeamsMessage(BaseModel):
+    thread_id: str
+    message_id: str
+    content: str
+
+class TeamsMember(BaseModel):
+    member_id: str
+    name: str
+    email: str
 
 class TeamsClient:
     def __init__(self, adapter: CloudAdapter, graph_client: GraphServiceClient, teams_app_id: str, team_id: str,
@@ -61,7 +77,7 @@ class TeamsClient:
 
     async def start_thread(
             self, title: str, content: str
-    ) -> Dict[str, Any]:
+    ) -> TeamsThread:
         """Start a new thread in a channel.
 
         Args:
@@ -74,10 +90,10 @@ class TeamsClient:
         try:
             await self._initialize()
 
-            result = {
-                "title": title,
-                "content": content
-            }
+            result = TeamsThread(
+                title=title,
+                content=content
+            )
 
             async def start_thread_callback(context: TurnContext):
                 response = await context.send_activity(activity_or_text=Activity(
@@ -99,7 +115,7 @@ class TeamsClient:
 
     async def update_thread(
             self, thread_id: str, content: str
-    ) -> Dict[str, str]:
+    ) -> TeamsMessage:
         """Add a message to an existing thread.
 
         Args:
@@ -112,10 +128,10 @@ class TeamsClient:
         try:
             await self._initialize()
 
-            result = {
-                "thread_id": thread_id,
-                "content": content
-            }
+            result = TeamsMessage(
+                thread_id=thread_id,
+                content=content
+            )
 
             async def update_thread_callback(context: TurnContext):
                 response = await context.send_activity(activity_or_text=Activity(
@@ -124,7 +140,7 @@ class TeamsClient:
                     conversation=ConversationAccount(id=thread_id)
                 ))
                 if response is not None:
-                    result["message_id"] = response.id
+                    result.message_id = response.id
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
@@ -142,7 +158,7 @@ class TeamsClient:
             thread_id: str,
             user_id: str,
             content: str
-    ) -> Dict[str, str]:
+    ) -> TeamsMessage:
         """Mention a user in a thread message.
 
         Args:
@@ -156,11 +172,10 @@ class TeamsClient:
         try:
             await self._initialize()
 
-            result = {
-                "thread_id": thread_id,
-                "user_id": user_id,
-                "content": content
-            }
+            result = TeamsMessage(
+                thread_id=thread_id,
+                content=content
+            )
 
             async def mention_user_callback(context: TurnContext):
                 member = await TeamsInfo.get_team_member(context, self.team_id, user_id)
@@ -177,7 +192,7 @@ class TeamsClient:
                     entities=[mention]
                 ))
                 if response is not None:
-                    result["message_id"] = response.id
+                    result.message_id = response.id
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
@@ -189,8 +204,8 @@ class TeamsClient:
             raise
 
     async def read_thread(
-            self, channel_id: str, thread_id: str
-    ) -> List[Dict[str, Any]]:
+            self, thread_id: str
+    ) -> List[TeamsMessage]:
         """Read all replies in a thread.
 
         Args:
@@ -209,14 +224,14 @@ class TeamsClient:
 
             if message is not None:
                 for reply in message.replies:
-                    result.append({"message_id": reply.id, "content": reply.body.content})
+                    result.append(TeamsMessage(message_id=reply.id, content=reply.body.content))
 
             return result
         except HttpOperationError as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
-    async def list_members(self) -> List[Dict[str, Any]]:
+    async def list_members(self) -> List[TeamsMember]:
         """List all members in the configured team.
 
         Returns:
@@ -229,7 +244,7 @@ class TeamsClient:
             async def list_members_callback(context: TurnContext):
                 members = await TeamsInfo.get_team_members(context, self.team_id)
                 for member in members:
-                    result.append(member)
+                    result.append(TeamsMember(member_id=member.id, name=member.name, email=member.email))
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
@@ -240,12 +255,11 @@ class TeamsClient:
             raise
 
     async def add_reaction(
-            self, channel_id: str, message_id: str, reaction: str
-    ) -> Dict[str, str]:
+            self, message_id: str, reaction: str
+    ) -> TeamsMessage:
         """Add a reaction to a message.
 
         Args:
-            channel_id: Channel ID containing message
             message_id: Message ID to react to
             reaction: Reaction emoji name
 
@@ -255,9 +269,9 @@ class TeamsClient:
         try:
             await self._initialize()
 
-            result = {
-                "message_id": message_id
-            }
+            result = TeamsMessage(
+                message_id=message_id
+            )
 
             async def add_reaction_callback(context: TurnContext):
                 response = await context.send_activity(activity_or_text=Activity(

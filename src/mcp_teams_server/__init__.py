@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
 from typing import AsyncIterator, List, Dict
+from pydantic import Field
 
 from azure.identity.aio import ClientSecretCredential
 from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
@@ -9,7 +10,7 @@ from mcp.server.fastmcp import FastMCP, Context
 from msgraph import GraphServiceClient
 
 from .config import BotConfiguration
-from .teams import TeamsClient
+from .teams import TeamsClient, TeamsMessage, TeamsThread, TeamsMember
 import sys
 import logging
 from dotenv import load_dotenv
@@ -34,17 +35,11 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
-#
-#   Bot resource link: https://portal.azure.com/#@inditex.cloud/resource/subscriptions/4b038ed6-da8c-4865-95a3-3ea3563b9d54/resourceGroups/cloudcotwo-rsg-esc1-pro-mcpteamsbot/providers/Microsoft.BotService/botServices/mcpteamsbot/overview
-#
-
-#
-#   App manifest generator link: https://dev.teams.microsoft.com/apps/f1fb85f3-e33e-41ca-8afe-9cbcece21fcd
-#
 
 @dataclass
 class AppContext:
     client: TeamsClient
+
 
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
@@ -66,7 +61,9 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     client = TeamsClient(adapter, graph_client, bot_config.APP_ID, bot_config.TEAM_ID, bot_config.TEAMS_CHANNEL_ID)
     yield AppContext(client=client)
 
+
 mcp = FastMCP("mcp-teams-server", lifespan=app_lifespan)
+
 
 @mcp.tool(name="teams_greeting", description="Says a hello message from MCP Teams Server")
 def teams_greeting(ctx: Context) -> str:
@@ -74,39 +71,57 @@ def teams_greeting(ctx: Context) -> str:
     client = ctx.request_context.lifespan_context["client"]
     return f'Hello from mcp-teams-server: {__version__} in team {client.get_team_tenant_id()}!'
 
-@mcp.tool(name="start_thread", description="Start a new thread in a channel")
-def start_thread(ctx: Context, channel_id: str, title: str, content: str) -> Dict[str, str]:
-    client = ctx.request_context.lifespan_context["client"]
-    return client.start_thread(channel_id, title, content)
 
-@mcp.tool(name="update_thread", description="Add a message to an existing thread")
-def update_thread(ctx: Context, channel_id: str, thread_id: str, content: str) -> Dict[str, str]:
+@mcp.tool(name="start_thread", description="Start a new thread with a given title and content")
+def start_thread(ctx: Context, title: str = Field(description="The new thread title"),
+                 content: str = Field(description="The new thread content")) -> TeamsThread:
     client = ctx.request_context.lifespan_context["client"]
-    return client.update_thread(channel_id, thread_id, content)
+    return client.start_thread(title, content)
 
-@mcp.tool(name="mention_user", description="Mention user in a thread")
-def mention_user(ctx: Context, channel_id: str, thread_id: str, user_id: str, content: str) -> Dict[str, str]:
+
+@mcp.tool(name="update_thread", description="Update an existing thread with new content")
+def update_thread(ctx: Context, thread_id: str = Field(description="The thread ID"),
+                  content: str = Field(description="The content to update in the thread")) -> TeamsMessage:
     client = ctx.request_context.lifespan_context["client"]
-    return client.mention_user(channel_id, thread_id, user_id, content)
+    return client.update_thread(thread_id, content)
+
+
+@mcp.tool(name="mention_user", description="Mention user in an existing thread")
+def mention_user(ctx: Context, thread_id: str = Field(description="The thread ID"), user_id: str = Field("The user ID"),
+                 content: str = Field("Content to be added to the thread")) -> TeamsMessage:
+    client = ctx.request_context.lifespan_context["client"]
+    return client.mention_user(thread_id, user_id, content)
+
 
 @mcp.tool(name="read_thread", description="Read replies in a thread")
-def read_thread(ctx: Context, channel_id: str, thread_id: str) -> List[Dict[str, str]]:
+def read_thread(ctx: Context, thread_id: str = Field(description="The thread ID")) -> List[TeamsMessage]:
     client = ctx.request_context.lifespan_context["client"]
-    return client.read_thread(channel_id, thread_id)
+    return client.read_thread(thread_id)
+
+
+# TODO: get member id from a given name
+
+# TODO: read threads in channel
+
+# TODO: reply to message
 
 @mcp.tool(name="list_members", description="List all members in the team")
-def list_members(ctx: Context) -> List[Dict[str, str]]:
+def list_members(ctx: Context) -> List[TeamsMember]:
     client = ctx.request_context.lifespan_context["client"]
     return client.list_members()
 
+
 @mcp.tool(name="add_reaction", description="Add reaction to a message")
-def add_reaction(ctx: Context, channel_id: str, message_id: str, reaction: str) -> Dict[str, str]:
+def add_reaction(ctx: Context, message_id: str = Field("The message ID"),
+                 reaction: str = Field("The reaction to be added")) -> TeamsMessage:
     client = ctx.request_context.lifespan_context["client"]
-    return client.add_reaction(channel_id, message_id, reaction)
+    return client.add_reaction(message_id, reaction)
+
 
 def main() -> None:
     LOGGER.info(f"Starting MCP Teams Server {__version__}")
     mcp.run()
+
 
 if __name__ == "__main__":
     main()
