@@ -3,8 +3,10 @@ from dataclasses import dataclass
 from importlib import metadata
 from typing import AsyncIterator, List, Dict
 
+from azure.identity.aio import ClientSecretCredential
 from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
 from mcp.server.fastmcp import FastMCP, Context
+from msgraph import GraphServiceClient
 
 from .config import BotConfiguration
 from .teams import TeamsClient
@@ -47,9 +49,21 @@ class AppContext:
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     """Manage application lifecycle with type-safe context"""
+
+    # Bot adapter construction
     bot_config = BotConfiguration()
     adapter = CloudAdapter(ConfigurationBotFrameworkAuthentication(bot_config))
-    client = TeamsClient(adapter, bot_config.APP_ID, bot_config.APP_TENANTID, bot_config.TEAMS_CHANNEL_ID)
+
+    # Graph client construction
+    credentials = ClientSecretCredential(
+        bot_config.APP_TENANTID,
+        bot_config.GRAPH_CLIENT_ID,
+        bot_config.GRAPH_CLIENT_SECRET
+    )
+    scopes = ['https://graph.microsoft.com/.default']
+    graph_client = GraphServiceClient(credentials=credentials, scopes=scopes)
+
+    client = TeamsClient(adapter, graph_client, bot_config.APP_ID, bot_config.TEAM_ID, bot_config.TEAMS_CHANNEL_ID)
     yield AppContext(client=client)
 
 mcp = FastMCP("mcp-teams-server", lifespan=app_lifespan)

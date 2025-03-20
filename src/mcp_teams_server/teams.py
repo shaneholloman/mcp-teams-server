@@ -10,22 +10,27 @@ from botbuilder.schema import (
     ConversationReference, ChannelAccount, ConversationAccount, Mention, MessageReaction, MessageReactionTypes,
 )
 from botbuilder.schema.teams import TeamsChannelAccount
+from msgraph import GraphServiceClient
+from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
+    ChatMessageItemRequestBuilder
 from msrest.exceptions import HttpOperationError
 
 LOGGER = logging.getLogger(__name__)
 
 
 class TeamsClient:
-    def __init__(self, adapter: CloudAdapter, teams_app_id: str, teams_tenant_id: str, teams_channel_id: str):
+    def __init__(self, adapter: CloudAdapter, graph_client: GraphServiceClient, teams_app_id: str, team_id: str,
+                 teams_channel_id: str):
         self.adapter = adapter
+        self.graph_client = graph_client
         self.teams_app_id = teams_app_id
-        self.teams_tenant_id = teams_tenant_id
+        self.team_id = team_id
         self.teams_channel_id = teams_channel_id
         self.service_url = None
         self.adapter.on_turn_error = self.on_turn_error
 
-    def get_team_tenant_id(self):
-        return self.teams_tenant_id
+    def get_team_id(self):
+        return self.team_id
 
     @staticmethod
     async def on_turn_error(context: TurnContext, error: Exception):
@@ -158,7 +163,7 @@ class TeamsClient:
             }
 
             async def mention_user_callback(context: TurnContext):
-                member = await TeamsInfo.get_team_member(context, self.teams_tenant_id, user_id)
+                member = await TeamsInfo.get_team_member(context, self.team_id, user_id)
                 if member is not None:
                     result["user_name"] = member.name
 
@@ -196,11 +201,17 @@ class TeamsClient:
             List of thread messages
         """
         try:
-            await self._initialize()
+            request = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters(expand=['replies'])
+            message = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                self.teams_channel_id).messages.by_chat_message_id(thread_id).get(request_configuration=request)
 
-            # TODO: do not know how to read a thread without deploying a server... graph?
+            result = []
 
-            return []
+            if message is not None:
+                for reply in message.replies:
+                    result.append({"message_id": reply.id, "content": reply.body.content})
+
+            return result
         except HttpOperationError as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
@@ -216,7 +227,7 @@ class TeamsClient:
             result = []
 
             async def list_members_callback(context: TurnContext):
-                members = await TeamsInfo.get_team_members(context, self.teams_tenant_id)
+                members = await TeamsInfo.get_team_members(context, self.team_id)
                 for member in members:
                     result.append(member)
 
@@ -254,7 +265,6 @@ class TeamsClient:
                     reactions_added=[MessageReaction(type=MessageReactionTypes.like)],
                     reply_to_id=message_id
                 ))
-
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
