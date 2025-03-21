@@ -72,11 +72,71 @@ docker build . -t inditextech/mcp-teams-server
 docker run -it inditextech/mcp-teams-server
 ```
 
--d (detach: run in background)
--e 
---env-file 
--it
+### Setup Claude desktop to use docker image
 
+```yaml
+{
+    "mcpServers": {
+       "teams": {
+            "command": "docker",
+            "args": [
+                "run",
+                "-i"
+                "--rm"
+                "inditextech/mcp-teams-server"
+            ],
+            "env": {
+                "TEAMS_APP_ID": "",
+                "TEAMS_APP_PASSWORD": "",
+                "TEAMS_APP_TYPE": "",
+                "TEAMS_APP_TENANT_ID": "",
+                "TEAM_ID": "",
+                "TEAMS_CHANNEL_ID": "",
+                "GRAPH_CLIENT_ID": "",
+                "GRAPH_CLIENT_SECRET": "",
+                "DOCKER_HOST": "unix:///var/run/docker.sock"
+            }
+        }
+    }
+}
+```
+
+### Setup Cline to use docker image
+
+```yaml 
+{
+  "mcpServers": {
+    "github.com/inditextech/mcp-teams-server/tree/main": {
+      "command": "wsl",
+      "args": [
+        "TEAMS_APP_ID=",
+        "TEAMS_APP_PASSWORD=",
+        "TEAMS_APP_TYPE=",
+        "TEAMS_APP_TENANT_ID=",
+        "TEAM_ID=",
+        "TEAMS_CHANNEL_ID=",
+        "GRAPH_CLIENT_ID=",
+        "GRAPH_CLIENT_SECRET=",
+        "docker",
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "SLACK_BOT_TOKEN",
+        "-e",
+        "SLACK_TEAM_ID",
+        "mcp/slack"
+      ],
+      "env": {
+        "DOCKER_HOST": "unix:///var/run/docker.sock"
+      },
+      "disabled": false,
+      "autoApprove": [],
+      "timeout": 300
+    }
+  }
+}
+```
 
 ## Contributing
 
