@@ -1,5 +1,6 @@
 from typing import List, Dict, Any
 import logging
+from uuid import UUID
 
 from botbuilder.core import TurnContext
 from botbuilder.core.teams import TeamsInfo
@@ -11,6 +12,7 @@ from botbuilder.schema import (
 )
 from botbuilder.schema.teams import TeamsChannelAccount
 from msgraph import GraphServiceClient
+from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
 from msrest.exceptions import HttpOperationError
@@ -35,6 +37,11 @@ class TeamsMember(BaseModel):
     email: str
 
 class TeamsClient:
+
+    # https://learn.microsoft.com/en-us/graph/permissions-reference#resource-specific-consent-rsc-permissions
+    # ChannelMessage.Read.Group
+    CHANNEL_MESSAGE_READ_GROUP: str = "19103a54-c397-4bcd-be5a-ef111e0406fa"
+
     def __init__(self, adapter: CloudAdapter, graph_client: GraphServiceClient, teams_app_id: str, team_id: str,
                  teams_channel_id: str):
         self.adapter = adapter
@@ -65,12 +72,12 @@ class TeamsClient:
                                              name="Teams channel")
         )
 
-    async def _initialize(self) -> str:
+    def _initialize(self) -> str:
         if not self.service_url:
             def context_callback(context: TurnContext):
-                self.service_url = context.service_url
+                self.service_url = context.activity.service_url
 
-            await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
+            self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
                                                      callback=context_callback)
         return self.service_url
@@ -88,11 +95,12 @@ class TeamsClient:
             Created thread details including ID
         """
         try:
-            await self._initialize()
+            self._initialize()
 
             result = TeamsThread(
                 title=title,
-                content=content
+                content=content,
+                thread_id=""
             )
 
             async def start_thread_callback(context: TurnContext):
@@ -102,7 +110,7 @@ class TeamsClient:
                     text=content
                 ))
                 if response is not None:
-                    result["thread_id"] = response.id
+                    result.thread_id = response.id
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
@@ -126,11 +134,12 @@ class TeamsClient:
             Updated thread details
         """
         try:
-            await self._initialize()
+            self._initialize()
 
             result = TeamsMessage(
                 thread_id=thread_id,
-                content=content
+                content=content,
+                message_id=""
             )
 
             async def update_thread_callback(context: TurnContext):
@@ -170,24 +179,23 @@ class TeamsClient:
             Message details including IDs
         """
         try:
-            await self._initialize()
+            self._initialize()
 
             result = TeamsMessage(
                 thread_id=thread_id,
-                content=content
+                content=content,
+                message_id=""
             )
 
             async def mention_user_callback(context: TurnContext):
                 member = await TeamsInfo.get_team_member(context, self.team_id, user_id)
-                if member is not None:
-                    result["user_name"] = member.name
 
-                mention = Mention(text=f"<at>{result.get('user_name')}</at>", type="mention",
-                                  mentioned=ChannelAccount(id=user_id, name=result["user_name"]))
+                mention = Mention(text=f"<at>{member.name}</at>", type="mention",
+                                  mentioned=ChannelAccount(id=user_id, name=member.name))
 
                 response = await context.send_activity(activity_or_text=Activity(
                     type=ActivityTypes.message,
-                    text=f'<at>{result["user_name"]}</at> {content}',
+                    text=f'<at>{member.name}</at> {content}',
                     conversation=ConversationAccount(id=thread_id),
                     entities=[mention]
                 ))
@@ -203,6 +211,17 @@ class TeamsClient:
             LOGGER.error(f"Error mentioning user: {str(e)}")
             raise
 
+    async def _grant_channel_group_read(self) -> AppRoleAssignment:
+        request = AppRoleAssignment(
+            principal_id=UUID(self.teams_app_id),
+            resource_id=UUID(self.team_id),
+            app_role_id=UUID(TeamsClient.CHANNEL_MESSAGE_READ_GROUP)
+        )
+        result = await self.graph_client.service_principals.by_service_principal_id(self.teams_app_id).app_role_assigned_to.post(request)
+        LOGGER.info(f"Granted app role {result}")
+        return result
+
+
     async def read_thread(
             self, thread_id: str
     ) -> List[TeamsMessage]:
@@ -216,7 +235,14 @@ class TeamsClient:
             List of thread messages
         """
         try:
-            request = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters(expand=['replies'])
+
+            # TODO: https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
+
+            grant = await self._grant_channel_group_read()
+
+            params = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters(expand=['replies'])
+            request = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetRequestConfiguration(query_parameters=params)
+
             message = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
                 self.teams_channel_id).messages.by_chat_message_id(thread_id).get(request_configuration=request)
 
@@ -238,7 +264,7 @@ class TeamsClient:
             List of team member details
         """
         try:
-            await self._initialize()
+            self._initialize()
             result = []
 
             async def list_members_callback(context: TurnContext):
@@ -267,17 +293,20 @@ class TeamsClient:
             Reaction details
         """
         try:
-            await self._initialize()
+            self._initialize()
 
             result = TeamsMessage(
-                message_id=message_id
+                message_id=message_id,
+                thread_id="",
+                content=""
             )
 
             async def add_reaction_callback(context: TurnContext):
                 response = await context.send_activity(activity_or_text=Activity(
                     type=ActivityTypes.message,
                     reactions_added=[MessageReaction(type=MessageReactionTypes.like)],
-                    reply_to_id=message_id
+                    reply_to_id=message_id,
+                    text=""
                 ))
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,

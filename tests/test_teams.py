@@ -17,7 +17,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.StreamHandler(sys.stderr)
+        logging.StreamHandler(sys.stdout)
     ]
 )
 
@@ -44,46 +44,44 @@ def setup_teams_client() -> TeamsClient:
 async def test_start_thread(setup_teams_client):
     LOGGER.info(f'test_start_thread in team: {setup_teams_client.team_id} and channel {setup_teams_client.teams_channel_id}')
     result = await setup_teams_client.start_thread("First thread", "First thread content")
-    LOGGER.info(f'Result {result}')
+    print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.asyncio
 async def test_update_thread(setup_teams_client):
-    # TODO: setup test data
-    thread_id = ""
+    thread_id = "19:6VEPVgD5xLBklBRX5jjaGSHjvV3FRPszk_QZ_Zc0Rqk1@thread.tacv2"
     result = await setup_teams_client.update_thread(thread_id, "Thread updated content")
+    print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.asyncio
 async def test_mention_user(setup_teams_client):
-    # TODO: setup test data
-    thread_id = ""
-    user_id = ""
+    thread_id = "19:6VEPVgD5xLBklBRX5jjaGSHjvV3FRPszk_QZ_Zc0Rqk1@thread.tacv2"
+    user_id = "29:1Ikp2uml8KHyXMGToEGWznopw1RLAu1IyyNa8sOR7BGR3O2VkeVTk5n9N0c_tv-mAA0Nogcp-NJbFsDybDsG7TA"
     result = await setup_teams_client.mention_user(thread_id, user_id, "User mentioned")
-    LOGGER.info(f'Result {result}')
+    print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.asyncio
 async def test_add_reaction(setup_teams_client):
-    message_id = ""
+    message_id = "1742559014527"
     reaction = ""
     result = await setup_teams_client.add_reaction(message_id, reaction)
-    LOGGER.info(f'Result {result}')
+    print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.asyncio
 async def test_read_thread(setup_teams_client):
     # TODO: setup test data
-    thread_id = ""
+    thread_id = "19:6VEPVgD5xLBklBRX5jjaGSHjvV3FRPszk_QZ_Zc0Rqk1@thread.tacv2"
     result = await setup_teams_client.read_thread(thread_id)
-    LOGGER.info(f'Result {result}')
+    print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.asyncio
 async def test_list_members(setup_teams_client):
-    # TODO: setup test data
     result = await setup_teams_client.list_members()
-    LOGGER.info(f'Result {result}')
+    print(f'Result {result}\n')
     assert result is not None
 
 
