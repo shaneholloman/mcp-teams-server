@@ -1,8 +1,12 @@
-from typing import List, Dict, Any
 import logging
+from typing import List
+
+from msgraph.generated.teams.item.channels.item.messages.item.replies.replies_request_builder import \
+    RepliesRequestBuilder
+from pydantic import BaseModel
 from uuid import UUID
 
-from botbuilder.core import TurnContext
+from botbuilder.core import TurnContext, MessageFactory
 from botbuilder.core.teams import TeamsInfo
 from botbuilder.integration.aiohttp import CloudAdapter
 from botbuilder.schema import (
@@ -15,11 +19,11 @@ from msgraph import GraphServiceClient
 from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
+from msgraph.generated.teams.item.channels.item.messages.messages_request_builder import MessagesRequestBuilder
 from msrest.exceptions import HttpOperationError
-from pydantic import BaseModel
+
 
 LOGGER = logging.getLogger(__name__)
-
 
 class TeamsThread(BaseModel):
     thread_id: str
@@ -37,7 +41,6 @@ class TeamsMember(BaseModel):
     email: str
 
 class TeamsClient:
-
     # https://learn.microsoft.com/en-us/graph/permissions-reference#resource-specific-consent-rsc-permissions
     # ChannelMessage.Read.Group
     CHANNEL_MESSAGE_READ_GROUP: str = "19103a54-c397-4bcd-be5a-ef111e0406fa"
@@ -78,8 +81,8 @@ class TeamsClient:
                 self.service_url = context.activity.service_url
 
             self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
-                                                     reference=self._create_conversation_reference(),
-                                                     callback=context_callback)
+                                               reference=self._create_conversation_reference(),
+                                               callback=context_callback)
         return self.service_url
 
     async def start_thread(
@@ -212,45 +215,59 @@ class TeamsClient:
             raise
 
     async def _grant_channel_group_read(self) -> AppRoleAssignment:
+        # https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
         request = AppRoleAssignment(
             principal_id=UUID(self.teams_app_id),
             resource_id=UUID(self.team_id),
             app_role_id=UUID(TeamsClient.CHANNEL_MESSAGE_READ_GROUP)
         )
-        result = await self.graph_client.service_principals.by_service_principal_id(self.teams_app_id).app_role_assigned_to.post(request)
+        result = await self.graph_client.service_principals.by_service_principal_id(
+            self.teams_app_id).app_role_assigned_to.post(request)
         LOGGER.info(f"Granted app role {result}")
         return result
 
+    async def read_threads(self) -> List[TeamsMessage]:
+        try:
+            # TODO: add pagination
 
-    async def read_thread(
+            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters()
+            request = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(query_parameters=query)
+            response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                self.teams_channel_id).messages.get(request_configuration=request)
+
+            result = []
+            for message in response.value:
+                result.append(TeamsMessage(message_id=message.id, content=message.body.content, thread_id=message.id))
+
+            return result
+        except HttpOperationError as e:
+            LOGGER.error(f"Error reading thread: {str(e)}")
+            raise
+
+    async def read_thread_replies(
             self, thread_id: str
     ) -> List[TeamsMessage]:
         """Read all replies in a thread.
 
         Args:
-            channel_id: Channel ID containing thread
             thread_id: Thread ID to read
 
         Returns:
             List of thread messages
         """
         try:
+            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters()
+            request = RepliesRequestBuilder.RepliesRequestBuilderGetRequestConfiguration(
+                query_parameters=params)
 
-            # TODO: https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
-
-            grant = await self._grant_channel_group_read()
-
-            params = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters(expand=['replies'])
-            request = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetRequestConfiguration(query_parameters=params)
-
-            message = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
-                self.teams_channel_id).messages.by_chat_message_id(thread_id).get(request_configuration=request)
+            replies = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                self.teams_channel_id).messages.by_chat_message_id(thread_id).replies.get(request_configuration=request)
 
             result = []
 
-            if message is not None:
-                for reply in message.replies:
-                    result.append(TeamsMessage(message_id=reply.id, content=reply.body.content))
+            if replies is not None:
+                for reply in replies.value:
+                    result.append(TeamsMessage(message_id=reply.id, content=reply.body.content, thread_id=reply.reply_to_id))
 
             return result
         except HttpOperationError as e:

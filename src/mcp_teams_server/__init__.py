@@ -96,7 +96,7 @@ def mention_user(ctx: Context, thread_id: str = Field(description="The thread ID
 @mcp.tool(name="read_thread", description="Read replies in a thread")
 def read_thread(ctx: Context, thread_id: str = Field(description="The thread ID")) -> List[TeamsMessage]:
     client = ctx.request_context.lifespan_context["client"]
-    return client.read_thread(thread_id)
+    return client.read_thread_replies(thread_id)
 
 
 # TODO: get member id from a given name
