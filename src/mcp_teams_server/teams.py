@@ -163,10 +163,16 @@ class TeamsClient:
                     from_property=TeamsChannelAccount(id=self.teams_app_id, name="MCP Bot"),
                     conversation=ConversationAccount(id=thread_id)
                 )
+                #
                 # Hack to get the connector client and reply to an existing activity
+                #
                 conversations = TeamsClient._get_conversation_operations(context)
-                response = await conversations.reply_to_activity(conversation_id=context.activity.conversation.id,
-                                                           activity_id=thread_id, activity=reply)
+                #
+                # Hack to reply to conversation https://github.com/microsoft/botframework-sdk/issues/6626
+                #
+                conversation_id = f"{context.activity.conversation.id};messageid={thread_id}"
+                response = await conversations.send_to_conversation(conversation_id=conversation_id, activity=reply)
+
                 if response is not None:
                     result.message_id = response.id
 
