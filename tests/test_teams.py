@@ -64,7 +64,7 @@ async def test_start_thread(setup_teams_client):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_read_threads(setup_teams_client):
-    result = await setup_teams_client.read_threads()
+    result = await setup_teams_client.read_threads(0, 50)
     print(f'Result {result}\n')
     assert result is not None
 
@@ -92,7 +92,7 @@ async def test_add_reaction(setup_teams_client, message_id):
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_read_thread_replies(setup_teams_client, thread_id):
-    result = await setup_teams_client.read_thread_replies(thread_id)
+    result = await setup_teams_client.read_thread_replies(thread_id, 0, 50)
     print(f'Result {result}\n')
     assert result is not None
 

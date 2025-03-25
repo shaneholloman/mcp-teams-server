@@ -2,25 +2,25 @@ import logging
 from typing import List
 
 from botframework.connector.aio.operations_async import ConversationsOperations
+from msgraph.generated.models.chat_message import ChatMessage
+from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
+    ChatMessageItemRequestBuilder
 from msgraph.generated.teams.item.channels.item.messages.item.replies.replies_request_builder import \
     RepliesRequestBuilder
 from pydantic import BaseModel
 from uuid import UUID
 
-from botbuilder.core import TurnContext, MessageFactory, BotAdapter
+from botbuilder.core import TurnContext, BotAdapter
 from botbuilder.core.teams import TeamsInfo
 from botbuilder.integration.aiohttp import CloudAdapter
 from botbuilder.schema import (
     Activity,
     ActivityTypes,
     ConversationReference, ChannelAccount, ConversationAccount, Mention, MessageReaction, MessageReactionTypes,
-    ConversationsResult,
 )
 from botbuilder.schema.teams import TeamsChannelAccount
 from msgraph import GraphServiceClient
 from msgraph.generated.models.app_role_assignment import AppRoleAssignment
-from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
-    ChatMessageItemRequestBuilder
 from msgraph.generated.teams.item.channels.item.messages.messages_request_builder import MessagesRequestBuilder
 from msrest.exceptions import HttpOperationError
 
@@ -45,7 +45,15 @@ class TeamsMember(BaseModel):
     email: str
 
 
+class PagedTeamsMessages(BaseModel):
+    offset: int
+    limit: int
+    total: int
+    items: List[TeamsMessage]
+
+
 class TeamsClient:
+    #
     # https://learn.microsoft.com/en-us/graph/permissions-reference#resource-specific-consent-rsc-permissions
     # ChannelMessage.Read.Group
     CHANNEL_MESSAGE_READ_GROUP: str = "19103a54-c397-4bcd-be5a-ef111e0406fa"
@@ -66,7 +74,8 @@ class TeamsClient:
     @staticmethod
     async def on_turn_error(context: TurnContext, error: Exception):
         LOGGER.error(f"Error {error}")
-        await context.send_activity("An error occurred in the bot, please try again later")
+        # await context.send_activity("An error occurred in the bot, please try again later")
+        pass
 
     def _create_conversation_reference(self) -> ConversationReference:
         service_url = "https://smba.trafficmanager.net/emea/"
@@ -185,8 +194,6 @@ class TeamsClient:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
 
-    # TODO: add reply to
-
     async def mention_user(
             self,
             thread_id: str,
@@ -218,12 +225,17 @@ class TeamsClient:
                 mention = Mention(text=f"<at>{member.name}</at>", type="mention",
                                   mentioned=ChannelAccount(id=user_id, name=member.name))
 
-                response = await context.send_activity(activity_or_text=Activity(
+                reply = Activity(
                     type=ActivityTypes.message,
                     text=f'<at>{member.name}</at> {content}',
                     conversation=ConversationAccount(id=thread_id),
                     entities=[mention]
-                ))
+                )
+
+                conversations = TeamsClient._get_conversation_operations(context)
+                conversation_id = f"{context.activity.conversation.id};messageid={thread_id}"
+                response = await conversations.send_to_conversation(conversation_id=conversation_id, activity=reply)
+
                 if response is not None:
                     result.message_id = response.id
 
@@ -248,18 +260,27 @@ class TeamsClient:
         LOGGER.info(f"Granted app role {result}")
         return result
 
-    async def read_threads(self) -> List[TeamsMessage]:
+    async def read_threads(self, offset: int, limit: int = 50) -> PagedTeamsMessages:
+        """Read all threads in configured teams channel.
+        
+        Args:
+            offset: The pagination offset or first result to return.
+            
+            limit: The pagination page size
+        
+        Returns:
+            Paged teams messages
+        """
         try:
-            # TODO: add pagination
-
-            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters()
+            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit)
             request = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(query_parameters=query)
             response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
                 self.teams_channel_id).messages.get(request_configuration=request)
 
-            result = []
+            result = PagedTeamsMessages(offset=offset, limit=limit, total=response.odata_count, items=[])
             for message in response.value:
-                result.append(TeamsMessage(message_id=message.id, content=message.body.content, thread_id=message.id))
+                result.items.append(
+                    TeamsMessage(message_id=message.id, content=message.body.content, thread_id=message.id))
 
             return result
         except HttpOperationError as e:
@@ -267,12 +288,14 @@ class TeamsClient:
             raise
 
     async def read_thread_replies(
-            self, thread_id: str
-    ) -> List[TeamsMessage]:
+            self, thread_id: str, offset: int, limit: int = 100
+    ) -> PagedTeamsMessages:
         """Read all replies in a thread.
 
         Args:
             thread_id: Thread ID to read
+            offset: The pagination offset
+            limit: The pagination page size
 
         Returns:
             List of thread messages
@@ -285,14 +308,27 @@ class TeamsClient:
             replies = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
                 self.teams_channel_id).messages.by_chat_message_id(thread_id).replies.get(request_configuration=request)
 
-            result = []
+            result = PagedTeamsMessages(offset=offset, limit=limit, total=replies.odata_count, items=[])
 
             if replies is not None:
                 for reply in replies.value:
-                    result.append(
+                    result.items.append(
                         TeamsMessage(message_id=reply.id, content=reply.body.content, thread_id=reply.reply_to_id))
 
             return result
+        except HttpOperationError as e:
+            LOGGER.error(f"Error reading thread: {str(e)}")
+            raise
+
+    async def read_message(self, message_id: str) -> ChatMessage:
+        try:
+            query = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters()
+            request = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetRequestConfiguration(
+                query_parameters=query)
+            response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                self.teams_channel_id).messages.by_chat_message_id(chat_message_id=message_id).get(
+                request_configuration=request)
+            return response
         except HttpOperationError as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
@@ -341,12 +377,15 @@ class TeamsClient:
                 content=""
             )
 
+            message = await self.read_message(message_id=message_id)
+
             async def add_reaction_callback(context: TurnContext):
-                response = await context.send_activity(activity_or_text=Activity(
-                    type=ActivityTypes.message,
-                    reactions_added=[MessageReaction(type=MessageReactionTypes.like)],
-                    reply_to_id=message_id
-                ))
+                activity = Activity(type=ActivityTypes.message,
+                                    id=message_id,
+                                    text=message.body.content,
+                                    reactions_added=[MessageReaction(type=MessageReactionTypes.like)])
+                response = await context.update_activity(activity=activity)
+                pass
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
