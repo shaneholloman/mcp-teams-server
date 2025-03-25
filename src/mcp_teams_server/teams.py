@@ -1,18 +1,20 @@
 import logging
 from typing import List
 
+from botframework.connector.aio.operations_async import ConversationsOperations
 from msgraph.generated.teams.item.channels.item.messages.item.replies.replies_request_builder import \
     RepliesRequestBuilder
 from pydantic import BaseModel
 from uuid import UUID
 
-from botbuilder.core import TurnContext, MessageFactory
+from botbuilder.core import TurnContext, MessageFactory, BotAdapter
 from botbuilder.core.teams import TeamsInfo
 from botbuilder.integration.aiohttp import CloudAdapter
 from botbuilder.schema import (
     Activity,
     ActivityTypes,
     ConversationReference, ChannelAccount, ConversationAccount, Mention, MessageReaction, MessageReactionTypes,
+    ConversationsResult,
 )
 from botbuilder.schema.teams import TeamsChannelAccount
 from msgraph import GraphServiceClient
@@ -22,23 +24,26 @@ from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_
 from msgraph.generated.teams.item.channels.item.messages.messages_request_builder import MessagesRequestBuilder
 from msrest.exceptions import HttpOperationError
 
-
 LOGGER = logging.getLogger(__name__)
+
 
 class TeamsThread(BaseModel):
     thread_id: str
     title: str
     content: str
 
+
 class TeamsMessage(BaseModel):
     thread_id: str
     message_id: str
     content: str
 
+
 class TeamsMember(BaseModel):
     member_id: str
     name: str
     email: str
+
 
 class TeamsClient:
     # https://learn.microsoft.com/en-us/graph/permissions-reference#resource-specific-consent-rsc-permissions
@@ -124,6 +129,12 @@ class TeamsClient:
             LOGGER.error(f"Error creating thread: {str(e)}")
             raise
 
+    @staticmethod
+    def _get_conversation_operations(context: TurnContext) -> ConversationsOperations:
+        # Hack to get the connector client and reply to an existing activity
+        connector_client = context.turn_state[BotAdapter.BOT_CONNECTOR_CLIENT_KEY]
+        return connector_client.conversations
+
     async def update_thread(
             self, thread_id: str, content: str
     ) -> TeamsMessage:
@@ -146,11 +157,16 @@ class TeamsClient:
             )
 
             async def update_thread_callback(context: TurnContext):
-                response = await context.send_activity(activity_or_text=Activity(
+                reply = Activity(
                     type=ActivityTypes.message,
                     text=content,
+                    from_property=TeamsChannelAccount(id=self.teams_app_id, name="MCP Bot"),
                     conversation=ConversationAccount(id=thread_id)
-                ))
+                )
+                # Hack to get the connector client and reply to an existing activity
+                conversations = TeamsClient._get_conversation_operations(context)
+                response = await conversations.reply_to_activity(conversation_id=context.activity.conversation.id,
+                                                           activity_id=thread_id, activity=reply)
                 if response is not None:
                     result.message_id = response.id
 
@@ -267,7 +283,8 @@ class TeamsClient:
 
             if replies is not None:
                 for reply in replies.value:
-                    result.append(TeamsMessage(message_id=reply.id, content=reply.body.content, thread_id=reply.reply_to_id))
+                    result.append(
+                        TeamsMessage(message_id=reply.id, content=reply.body.content, thread_id=reply.reply_to_id))
 
             return result
         except HttpOperationError as e:
@@ -322,8 +339,7 @@ class TeamsClient:
                 response = await context.send_activity(activity_or_text=Activity(
                     type=ActivityTypes.message,
                     reactions_added=[MessageReaction(type=MessageReactionTypes.like)],
-                    reply_to_id=message_id,
-                    text=""
+                    reply_to_id=message_id
                 ))
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
