@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
@@ -35,6 +36,7 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
+REQUIRED_ENV_VARS = ["TEAMS_APP_ID", "TEAMS_APP_PASSWORD", "TEAMS_APP_TYPE", "TEAMS_APP_TENANT_ID", "TEAM_ID", "TEAMS_CHANNEL_ID"]
 
 @dataclass
 class AppContext:
@@ -52,8 +54,8 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     # Graph client construction
     credentials = ClientSecretCredential(
         bot_config.APP_TENANTID,
-        bot_config.GRAPH_CLIENT_ID,
-        bot_config.GRAPH_CLIENT_SECRET
+        bot_config.APP_ID,
+        bot_config.APP_PASSWORD
     )
     scopes = ['https://graph.microsoft.com/.default']
     graph_client = GraphServiceClient(credentials=credentials, scopes=scopes)
@@ -121,8 +123,19 @@ async def list_members(ctx: Context) -> List[TeamsMember]:
     client = _get_teams_client(ctx)
     return await client.list_members()
 
+def _check_required_environment():
+    exit_code = None
+    for var in REQUIRED_ENV_VARS:
+        value = os.environ.get(var)
+        if value is None:
+            LOGGER.info(f"Required ENV {var} not present")
+            exit_code = 1
+    if exit_code is not None:
+        sys.exit(exit_code)
+
 def main() -> None:
     LOGGER.info(f"Starting MCP Teams Server {__version__}")
+    _check_required_environment()
     mcp.run()
 
 if __name__ == "__main__":

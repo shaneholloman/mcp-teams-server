@@ -18,6 +18,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "mcp[cli]>=1.4.1",
     "msgraph-sdk>=1.25.0",
+    "multidict==6.2.0",
 ]
 
 [project.scripts]

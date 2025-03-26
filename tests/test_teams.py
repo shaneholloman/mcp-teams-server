@@ -33,8 +33,8 @@ def setup_teams_client() -> TeamsClient:
     # Graph client
     credentials = ClientSecretCredential(
         config.APP_TENANTID,
-        config.GRAPH_CLIENT_ID,
-        config.GRAPH_CLIENT_SECRET
+        config.APP_ID,
+        config.APP_PASSWORD
     )
     scopes = ['https://graph.microsoft.com/.default']
     graph_client = GraphServiceClient(credentials=credentials, scopes=scopes)
