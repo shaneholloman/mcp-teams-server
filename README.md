@@ -9,7 +9,6 @@ An MCP (Model Context Protocol) server implementation for Microsoft Teams integr
 - Mention users in threads
 - Read thread replies
 - List channel team members
-- Add reactions to messages in threads
 
 ## Prerequisites
 
@@ -36,6 +35,8 @@ uv pip install -r requirements.txt
 ### Azure Bot registration
 
 Follow the instructions provided by Microsoft regarding [this topic](https://learn.microsoft.com/en-us/azure/bot-service/bot-service-quickstart-registration?view=azure-bot-service-4.0&tabs=userassigned)
+
+TODO: describe required resources: Azure Bot registration, Application registration, Client Credentials
 
 ### Microsoft application publishing
 

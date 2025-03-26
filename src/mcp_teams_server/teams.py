@@ -2,12 +2,13 @@ import logging
 from typing import List
 
 from botframework.connector.aio.operations_async import ConversationsOperations
+from coverage.parser import TryBlock
 from msgraph.generated.models.chat_message import ChatMessage
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
 from msgraph.generated.teams.item.channels.item.messages.item.replies.replies_request_builder import \
     RepliesRequestBuilder
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 from botbuilder.core import TurnContext, BotAdapter
@@ -16,41 +17,35 @@ from botbuilder.integration.aiohttp import CloudAdapter
 from botbuilder.schema import (
     Activity,
     ActivityTypes,
-    ConversationReference, ChannelAccount, ConversationAccount, Mention, MessageReaction, MessageReactionTypes,
+    ConversationReference, ChannelAccount, ConversationAccount, Mention,
 )
 from botbuilder.schema.teams import TeamsChannelAccount
 from msgraph import GraphServiceClient
 from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.teams.item.channels.item.messages.messages_request_builder import MessagesRequestBuilder
-from msrest.exceptions import HttpOperationError
 
 LOGGER = logging.getLogger(__name__)
 
-
 class TeamsThread(BaseModel):
-    thread_id: str
-    title: str
-    content: str
-
+    thread_id: str = Field(description="Thread ID")
+    title: str = Field(description="Message title")
+    content: str = Field(description="Message content")
 
 class TeamsMessage(BaseModel):
-    thread_id: str
-    message_id: str
-    content: str
-
+    thread_id: str = Field(description="Thread ID")
+    message_id: str = Field(description="Message ID")
+    content: str = Field(description="Message content")
 
 class TeamsMember(BaseModel):
-    member_id: str
-    name: str
-    email: str
-
+    member_id: str = Field(description="Member ID")
+    name: str = Field(description="Member name")
+    email: str = Field(description="Member email")
 
 class PagedTeamsMessages(BaseModel):
-    offset: int
-    limit: int
-    total: int
-    items: List[TeamsMessage]
-
+    offset: int = Field(description="Paged item offset, starts in 0")
+    limit: int = Field(description="Page limit. Number of items to retrieve")
+    total: int = Field(description="Total items available for retrieval")
+    items: List[TeamsMessage] = Field(description="List of Team messages")
 
 class TeamsClient:
     #
@@ -134,7 +129,7 @@ class TeamsClient:
                                                      callback=start_thread_callback)
 
             return result
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error creating thread: {str(e)}")
             raise
 
@@ -190,21 +185,40 @@ class TeamsClient:
                                                      callback=update_thread_callback)
 
             return result
-        except HttpOperationError as e:
+        except Exception as e:
+            LOGGER.error(f"Error updating thread: {str(e)}")
+            raise
+
+    async def get_member_by_id(self, member_id: str) -> TeamsMember:
+        try:
+            self._initialize()
+
+            result = TeamsMember(member_id=member_id, name="", email="")
+
+            async def get_user_by_id_callback(context: TurnContext):
+                member = await TeamsInfo.get_team_member(context, self.team_id, member_id)
+                result.name = member.name
+                result.email = member.email
+
+            await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
+                                                     reference=self._create_conversation_reference(),
+                                                     callback=get_user_by_id_callback)
+            return result
+        except Exception as e:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
 
     async def mention_user(
             self,
             thread_id: str,
-            user_id: str,
+            member_id: str,
             content: str
     ) -> TeamsMessage:
         """Mention a user in a thread message.
 
         Args:
             thread_id: Thread ID to add mention
-            user_id: ID of user to mention
+            member_id: ID of member to mention
             content: Message content
 
         Returns:
@@ -220,10 +234,10 @@ class TeamsClient:
             )
 
             async def mention_user_callback(context: TurnContext):
-                member = await TeamsInfo.get_team_member(context, self.team_id, user_id)
+                member = await TeamsInfo.get_team_member(context, self.team_id, member_id)
 
                 mention = Mention(text=f"<at>{member.name}</at>", type="mention",
-                                  mentioned=ChannelAccount(id=user_id, name=member.name))
+                                  mentioned=ChannelAccount(id=member_id, name=member.name))
 
                 reply = Activity(
                     type=ActivityTypes.message,
@@ -244,7 +258,7 @@ class TeamsClient:
                                                      callback=mention_user_callback)
 
             return result
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error mentioning user: {str(e)}")
             raise
 
@@ -269,10 +283,10 @@ class TeamsClient:
             limit: The pagination page size
         
         Returns:
-            Paged teams messages
+            Paged team channel messages containing
         """
         try:
-            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit)
+            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit, count=True)
             request = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(query_parameters=query)
             response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
                 self.teams_channel_id).messages.get(request_configuration=request)
@@ -283,7 +297,7 @@ class TeamsClient:
                     TeamsMessage(message_id=message.id, content=message.body.content, thread_id=message.id))
 
             return result
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
@@ -301,7 +315,7 @@ class TeamsClient:
             List of thread messages
         """
         try:
-            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters()
+            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters(skip=offset, top=limit, count=True)
             request = RepliesRequestBuilder.RepliesRequestBuilderGetRequestConfiguration(
                 query_parameters=params)
 
@@ -316,7 +330,7 @@ class TeamsClient:
                         TeamsMessage(message_id=reply.id, content=reply.body.content, thread_id=reply.reply_to_id))
 
             return result
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
@@ -329,7 +343,7 @@ class TeamsClient:
                 self.teams_channel_id).messages.by_chat_message_id(chat_message_id=message_id).get(
                 request_configuration=request)
             return response
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
@@ -352,46 +366,12 @@ class TeamsClient:
                                                      reference=self._create_conversation_reference(),
                                                      callback=list_members_callback)
             return result
-        except HttpOperationError as e:
+        except Exception as e:
             LOGGER.error(f"Error listing members: {str(e)}")
             raise
 
-    async def add_reaction(
-            self, message_id: str, reaction: str
-    ) -> TeamsMessage:
-        """Add a reaction to a message.
-
-        Args:
-            message_id: Message ID to react to
-            reaction: Reaction emoji name
-
-        Returns:
-            Reaction details
-        """
-        try:
-            self._initialize()
-
-            result = TeamsMessage(
-                message_id=message_id,
-                thread_id="",
-                content=""
-            )
-
-            message = await self.read_message(message_id=message_id)
-
-            async def add_reaction_callback(context: TurnContext):
-                activity = Activity(type=ActivityTypes.message,
-                                    id=message_id,
-                                    text=message.body.content,
-                                    reactions_added=[MessageReaction(type=MessageReactionTypes.like)])
-                response = await context.update_activity(activity=activity)
-                pass
-
-            await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
-                                                     reference=self._create_conversation_reference(),
-                                                     callback=add_reaction_callback)
-
-            return result
-        except HttpOperationError as e:
-            LOGGER.error(f"Error adding reaction: {str(e)}")
-            raise
+    async def get_member_by_name(self, name: str) -> TeamsMember|None:
+        members = await self.list_members()
+        for member in members:
+            if member.name == name:
+                return member

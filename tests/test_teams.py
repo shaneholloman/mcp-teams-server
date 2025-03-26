@@ -43,11 +43,11 @@ def setup_teams_client() -> TeamsClient:
 
 @pytest.fixture()
 def thread_id() -> str:
-    return "1742812462884"
+    return "1742974922231"
 
 @pytest.fixture()
 def message_id() -> str:
-    return "1742812462884"
+    return "1742974922231"
 
 @pytest.fixture()
 def user_id() -> str:
@@ -79,13 +79,6 @@ async def test_update_thread(setup_teams_client, thread_id):
 @pytest.mark.asyncio
 async def test_mention_user(setup_teams_client, thread_id, user_id):
     result = await setup_teams_client.mention_user(thread_id, user_id, "User mentioned")
-    print(f'Result {result}\n')
-    assert result is not None
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_add_reaction(setup_teams_client, message_id):
-    result = await setup_teams_client.add_reaction(message_id, "")
     print(f'Result {result}\n')
     assert result is not None
 
