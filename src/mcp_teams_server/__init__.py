@@ -82,7 +82,7 @@ async def start_thread(ctx: Context, title: str = Field(description="The thread 
 
 
 @mcp.tool(name="update_thread", description="Update an existing thread with new content")
-async def update_thread(ctx: Context, thread_id: str = Field(description="The thread ID"),
+async def update_thread(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
                         content: str = Field(description="The content to update in the thread")) -> TeamsMessage:
     await ctx.debug(f"update_thread with thread_id={thread_id} and content={content}")
     client = _get_teams_client(ctx)
@@ -90,7 +90,7 @@ async def update_thread(ctx: Context, thread_id: str = Field(description="The th
 
 
 @mcp.tool(name="mention_member", description="Mention a member in an existing thread")
-async def mention_member(ctx: Context, thread_id: str = Field(description="The thread ID"),
+async def mention_member(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
                        member_name: str = Field("The member name"),
                        content: str = Field("Content to be added to the thread")) -> TeamsMessage:
     await ctx.debug(f"mention_member in thread_id={thread_id}, member_name={member_name} and content={content}")
@@ -99,7 +99,7 @@ async def mention_member(ctx: Context, thread_id: str = Field(description="The t
 
 
 @mcp.tool(name="read_thread", description="Read replies in a thread")
-async def read_thread(ctx: Context, thread_id: str = Field(description="The thread ID")) -> PagedTeamsMessages:
+async def read_thread(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'")) -> PagedTeamsMessages:
     await ctx.debug(f"read_thread with thread_id={thread_id}")
     client = _get_teams_client(ctx)
     return await client.read_thread_replies(thread_id, 0, 100)

@@ -26,12 +26,12 @@ from msgraph.generated.teams.item.channels.item.messages.messages_request_builde
 LOGGER = logging.getLogger(__name__)
 
 class TeamsThread(BaseModel):
-    thread_id: str = Field(description="Thread ID")
+    thread_id: str = Field(description="Thread ID as a string in the format '1743086901347'")
     title: str = Field(description="Message title")
     content: str = Field(description="Message content")
 
 class TeamsMessage(BaseModel):
-    thread_id: str = Field(description="Thread ID")
+    thread_id: str = Field(description="Thread ID as a string in the format '1743086901347'")
     message_id: str = Field(description="Message ID")
     content: str = Field(description="Message content")
 
@@ -40,7 +40,7 @@ class TeamsMember(BaseModel):
     email: str = Field(description="Member email")
 
 class PagedTeamsMessages(BaseModel):
-    offset: int = Field(description="Paged item offset, starts in 0")
+    offset: int = Field(description="Paged item offset, number starts in 0")
     limit: int = Field(description="Page limit. Number of items to retrieve")
     total: int = Field(description="Total items available for retrieval")
     items: List[TeamsMessage] = Field(description="List of Team messages")
@@ -288,7 +288,7 @@ class TeamsClient:
             Paged team channel messages containing
         """
         try:
-            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit, count=True)
+            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit)
             request = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(query_parameters=query)
             response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
                 self.teams_channel_id).messages.get(request_configuration=request)
@@ -317,7 +317,7 @@ class TeamsClient:
             List of thread messages
         """
         try:
-            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters(skip=offset, top=limit, count=True)
+            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters(skip=offset, top=limit)
             request = RepliesRequestBuilder.RepliesRequestBuilderGetRequestConfiguration(
                 query_parameters=params)
 
