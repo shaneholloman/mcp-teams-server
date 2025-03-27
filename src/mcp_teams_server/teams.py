@@ -2,7 +2,6 @@ import logging
 from typing import List
 
 from botframework.connector.aio.operations_async import ConversationsOperations
-from coverage.parser import TryBlock
 from msgraph.generated.models.chat_message import ChatMessage
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
@@ -68,7 +67,7 @@ class TeamsClient:
 
     @staticmethod
     async def on_turn_error(context: TurnContext, error: Exception):
-        LOGGER.error(f"Error {error}")
+        LOGGER.error(f"Error {str(error)}")
         # await context.send_activity("An error occurred in the bot, please try again later")
         pass
 
@@ -84,12 +83,12 @@ class TeamsClient:
                                              name="Teams channel")
         )
 
-    def _initialize(self) -> str:
+    async def _initialize(self) -> str:
         if not self.service_url:
             def context_callback(context: TurnContext):
                 self.service_url = context.activity.service_url
 
-            self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
+            await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                reference=self._create_conversation_reference(),
                                                callback=context_callback)
         return self.service_url
@@ -107,7 +106,7 @@ class TeamsClient:
             Created thread details including ID
         """
         try:
-            self._initialize()
+            await self._initialize()
 
             result = TeamsThread(
                 title=title,
@@ -152,7 +151,7 @@ class TeamsClient:
             Updated thread details
         """
         try:
-            self._initialize()
+            await self._initialize()
 
             result = TeamsMessage(
                 thread_id=thread_id,
@@ -191,7 +190,7 @@ class TeamsClient:
 
     async def get_member_by_id(self, member_id: str) -> TeamsMember:
         try:
-            self._initialize()
+            await self._initialize()
 
             result = TeamsMember(member_id=member_id, name="", email="")
 
@@ -225,7 +224,7 @@ class TeamsClient:
             Message details including IDs
         """
         try:
-            self._initialize()
+            await self._initialize()
 
             result = TeamsMessage(
                 thread_id=thread_id,
@@ -354,7 +353,7 @@ class TeamsClient:
             List of team member details
         """
         try:
-            self._initialize()
+            await self._initialize()
             result = []
 
             async def list_members_callback(context: TurnContext):

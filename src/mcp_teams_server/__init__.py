@@ -36,7 +36,9 @@ logging.basicConfig(
 
 LOGGER = logging.getLogger(__name__)
 
-REQUIRED_ENV_VARS = ["TEAMS_APP_ID", "TEAMS_APP_PASSWORD", "TEAMS_APP_TYPE", "TEAMS_APP_TENANT_ID", "TEAM_ID", "TEAMS_CHANNEL_ID"]
+REQUIRED_ENV_VARS = ["TEAMS_APP_ID", "TEAMS_APP_PASSWORD", "TEAMS_APP_TYPE", "TEAMS_APP_TENANT_ID", "TEAM_ID",
+                     "TEAMS_CHANNEL_ID"]
+
 
 @dataclass
 class AppContext:
@@ -68,7 +70,7 @@ mcp = FastMCP("mcp-teams-server", lifespan=app_lifespan)
 
 
 def _get_teams_client(ctx: Context) -> TeamsClient:
-    return ctx.request_context.lifespan_context["client"]
+    return ctx.request_context.lifespan_context.client
 
 
 @mcp.tool(name="start_thread", description="Start a new thread with a given title and content")
@@ -102,14 +104,18 @@ async def read_thread(ctx: Context, thread_id: str = Field(description="The thre
     client = _get_teams_client(ctx)
     return await client.read_thread_replies(thread_id, 0, 100)
 
+
 @mcp.tool(name="list_threads", description="List threads in channel with pagination")
 async def list_threads(ctx: Context,
-                       offset: int = Field(description="Offset of the first thread to retrieve, used for pagination.", default=0),
+                       offset: int = Field(description="Offset of the first thread to retrieve, used for pagination.",
+                                           default=0),
                        limit: int = Field(
-                           description="Maximum number of items to retrieve or page size", default=50)) -> PagedTeamsMessages:
+                           description="Maximum number of items to retrieve or page size",
+                           default=50)) -> PagedTeamsMessages:
     await ctx.debug(f"list_threads with offset={offset} and limit={limit}")
     client = _get_teams_client(ctx)
     return await client.read_threads(offset, limit)
+
 
 @mcp.tool(name="get_member_by_name", description="Get a member by its name")
 async def get_member_by_name(ctx: Context, name: str = Field(description="Member name")):
@@ -117,11 +123,13 @@ async def get_member_by_name(ctx: Context, name: str = Field(description="Member
     client = _get_teams_client(ctx)
     return await client.get_member_by_name(name)
 
+
 @mcp.tool(name="list_members", description="List all members in the team")
 async def list_members(ctx: Context) -> List[TeamsMember]:
     await ctx.debug(f"list_members")
     client = _get_teams_client(ctx)
     return await client.list_members()
+
 
 def _check_required_environment():
     exit_code = None
@@ -133,10 +141,22 @@ def _check_required_environment():
     if exit_code is not None:
         sys.exit(exit_code)
 
+
 def main() -> None:
-    LOGGER.info(f"Starting MCP Teams Server {__version__}")
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="MCP Teams Server to allow Microsoft Teams interaction"
+    )
+    parser.add_argument("-t", "--transport", nargs=1, type=str, help="MCP Server Transport: stdio or sse",
+                        default="stdio",
+                        choices=["stdio", "sse"])
+
+    args = parser.parse_args()
+
+    LOGGER.info(f"Starting MCP Teams Server \"{__version__}\" with transport \"{args.transport}\"")
     _check_required_environment()
-    mcp.run()
+    mcp.run(transport=args.transport)
+
 
 if __name__ == "__main__":
     main()

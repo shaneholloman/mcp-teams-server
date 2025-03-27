@@ -93,8 +93,6 @@ docker run -it inditextech/mcp-teams-server
                 "TEAMS_APP_TENANT_ID": "",
                 "TEAM_ID": "",
                 "TEAMS_CHANNEL_ID": "",
-                "GRAPH_CLIENT_ID": "",
-                "GRAPH_CLIENT_SECRET": "",
                 "DOCKER_HOST": "unix:///var/run/docker.sock"
             }
         }
@@ -116,17 +114,11 @@ docker run -it inditextech/mcp-teams-server
         "TEAMS_APP_TENANT_ID=",
         "TEAM_ID=",
         "TEAMS_CHANNEL_ID=",
-        "GRAPH_CLIENT_ID=",
-        "GRAPH_CLIENT_SECRET=",
         "docker",
         "run",
         "-i",
         "--rm",
-        "-e",
-        "SLACK_BOT_TOKEN",
-        "-e",
-        "SLACK_TEAM_ID",
-        "mcp/slack"
+        "inditextech/mcp-teams-server"
       ],
       "env": {
         "DOCKER_HOST": "unix:///var/run/docker.sock"
