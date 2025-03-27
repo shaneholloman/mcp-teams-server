@@ -36,8 +36,7 @@ class TeamsMessage(BaseModel):
     content: str = Field(description="Message content")
 
 class TeamsMember(BaseModel):
-    member_id: str = Field(description="Member ID")
-    name: str = Field(description="Member name")
+    name: str = Field(description="Member name used in mentions and user information cards")
     email: str = Field(description="Member email")
 
 class PagedTeamsMessages(BaseModel):
@@ -192,32 +191,32 @@ class TeamsClient:
         try:
             await self._initialize()
 
-            result = TeamsMember(member_id=member_id, name="", email="")
+            result = TeamsMember(name="", email="")
 
-            async def get_user_by_id_callback(context: TurnContext):
+            async def get_member_by_id_callback(context: TurnContext):
                 member = await TeamsInfo.get_team_member(context, self.team_id, member_id)
                 result.name = member.name
                 result.email = member.email
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
-                                                     callback=get_user_by_id_callback)
+                                                     callback=get_member_by_id_callback)
             return result
         except Exception as e:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
 
-    async def mention_user(
+    async def mention_member(
             self,
             thread_id: str,
-            member_id: str,
+            member_name: str,
             content: str
     ) -> TeamsMessage:
         """Mention a user in a thread message.
 
         Args:
             thread_id: Thread ID to add mention
-            member_id: ID of member to mention
+            member_name: name of member to mention
             content: Message content
 
         Returns:
@@ -232,15 +231,19 @@ class TeamsClient:
                 message_id=""
             )
 
-            async def mention_user_callback(context: TurnContext):
-                member = await TeamsInfo.get_team_member(context, self.team_id, member_id)
+            async def mention_member_callback(context: TurnContext):
+                members = await TeamsInfo.get_team_members(context, self.team_id)
+                mention_member = None
+                for member in members:
+                    if member.name == member_name:
+                        mention_member = member
 
-                mention = Mention(text=f"<at>{member.name}</at>", type="mention",
-                                  mentioned=ChannelAccount(id=member_id, name=member.name))
+                mention = Mention(text=f"<at>{mention_member.name}</at>", type="mention",
+                                  mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
 
                 reply = Activity(
                     type=ActivityTypes.message,
-                    text=f'<at>{member.name}</at> {content}',
+                    text=f'<at>{mention_member.name}</at> {content}',
                     conversation=ConversationAccount(id=thread_id),
                     entities=[mention]
                 )
@@ -254,7 +257,7 @@ class TeamsClient:
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),
-                                                     callback=mention_user_callback)
+                                                     callback=mention_member_callback)
 
             return result
         except Exception as e:
@@ -359,7 +362,7 @@ class TeamsClient:
             async def list_members_callback(context: TurnContext):
                 members = await TeamsInfo.get_team_members(context, self.team_id)
                 for member in members:
-                    result.append(TeamsMember(member_id=member.id, name=member.name, email=member.email))
+                    result.append(TeamsMember(name=member.name, email=member.email))
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
                                                      reference=self._create_conversation_reference(),

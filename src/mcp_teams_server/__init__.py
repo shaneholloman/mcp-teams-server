@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
-from typing import AsyncIterator, List, Dict
+from typing import AsyncIterator, List
 from pydantic import Field
 
 from azure.identity.aio import ClientSecretCredential
@@ -89,13 +89,13 @@ async def update_thread(ctx: Context, thread_id: str = Field(description="The th
     return await client.update_thread(thread_id, content)
 
 
-@mcp.tool(name="mention_user", description="Mention a member in an existing thread")
-async def mention_user(ctx: Context, thread_id: str = Field(description="The thread ID"),
-                       member_id: str = Field("The user ID"),
+@mcp.tool(name="mention_member", description="Mention a member in an existing thread")
+async def mention_member(ctx: Context, thread_id: str = Field(description="The thread ID"),
+                       member_name: str = Field("The member name"),
                        content: str = Field("Content to be added to the thread")) -> TeamsMessage:
-    await ctx.debug(f"mention_user in thread_id={thread_id}, member_id={member_id} and content={content}")
+    await ctx.debug(f"mention_member in thread_id={thread_id}, member_name={member_name} and content={content}")
     client = _get_teams_client(ctx)
-    return await client.mention_user(thread_id, member_id, content)
+    return await client.mention_member(thread_id, member_name, content)
 
 
 @mcp.tool(name="read_thread", description="Read replies in a thread")

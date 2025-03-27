@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from azure.identity.aio import ClientSecretCredential
 
@@ -43,15 +45,15 @@ def setup_teams_client() -> TeamsClient:
 
 @pytest.fixture()
 def thread_id() -> str:
-    return "1742974922231"
+    return os.environ.get("TEST_THREAD_ID")
 
 @pytest.fixture()
 def message_id() -> str:
-    return "1742974922231"
+    return os.environ.get("TEST_MESSAGE_ID")
 
 @pytest.fixture()
-def user_id() -> str:
-    return "29:1Ikp2uml8KHyXMGToEGWznopw1RLAu1IyyNa8sOR7BGR3O2VkeVTk5n9N0c_tv-mAA0Nogcp-NJbFsDybDsG7TA"
+def user_name() -> str:
+    return os.environ.get("TEST_USER_NAME")
 
 @pytest.mark.integration
 @pytest.mark.asyncio
@@ -77,8 +79,8 @@ async def test_update_thread(setup_teams_client, thread_id):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_mention_user(setup_teams_client, thread_id, user_id):
-    result = await setup_teams_client.mention_user(thread_id, user_id, "User mentioned")
+async def test_mention_user(setup_teams_client, thread_id, user_name):
+    result = await setup_teams_client.mention_member(thread_id, user_name, "User mentioned")
     print(f'Result {result}\n')
     assert result is not None
 
