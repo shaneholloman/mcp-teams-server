@@ -6,7 +6,9 @@ this project.
 
 ## Prerequisites
 
-- Before starting to contribute to the code, you must first sign the [Contributor License Agreement (CLA)](./documents/ITX_OSS_CLA.pdf).
+- Before starting to contribute to the code, you must first sign the
+  [Contributor License Agreement (CLA)](https://github.com/InditexTech/foss/blob/main/documents/ITX_OSS_CLA.pdf).
+  Detailed instructions on how to proceed can be found [here](https://github.com/InditexTech/foss/blob/main/CONTRIBUTING.md).
 
 ## How to Contribute
 
@@ -37,3 +39,13 @@ project's structure or architecture.
 and its purpose.
 - Be sure to link the corresponding issue in your pull request to maintain proper tracking of contributions.
 - Remember to add license and copyright information following the [REUSE Specification](https://reuse.software/spec/#copyright-and-licensing-information).
+
+## Development
+
+Make sure that you have:
+
+- Read the rest of the [`CONTRIBUTING.md`](CONTRIBUTING.md) sections.
+- Meet the [prerequisites](#prerequisites).
+- [uv](https://github.com/astral-sh/uv) installed
+- [python](https://www.python.org/) 3.10 or later installed
+- Set up integration with microsoft teams by your own means

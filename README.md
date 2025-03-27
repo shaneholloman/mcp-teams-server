@@ -97,12 +97,15 @@ https://teams.microsoft.com/l/channel/[TEAMS_CHANNEL_ID]/McpBot?groupId=[TEAM_ID
 
 Set up the following environment variables in your shell or in an .env file:
 
-- TEAMS_APP_ID=<uuid for your MS Entra ID application ID>
-- TEAMS_APP_PASSWORD=<client secret>
-- TEAMS_APP_TYPE=<SingleTenant or MultiTenant>
-- TEAMS_APP_TENANT_ID=<Tenant uuid in case of SingleTenant>
-- TEAM_ID=<MS Teams Group Id or Team Id>
-- TEAMS_CHANNEL_ID=<MS Teams Channel ID with url escaped chars>
+| Key                     | Description                                |
+|-------------------------|--------------------------------------------|
+| **TEAMS_APP_ID**        | UUID for your MS Entra ID application ID   |
+| **TEAMS_APP_PASSWORD**  | Client secret                              |
+| **TEAMS_APP_TYPE**      | SingleTenant or MultiTenant                |
+| **TEAMS_APP_TENANT_ID** | Tenant uuid in case of SingleTenant        |
+| **TEAM_ID**             | MS Teams Group Id or Team Id               |
+| **TEAMS_CHANNEL_ID**    | MS Teams Channel ID with url escaped chars |
+
 
 Start server:
 
@@ -114,9 +117,12 @@ uv run mcp-teams-server
 
 Integration tests require the set up the following environment variables:
 
-- TEST_THREAD_ID=<timestamp of the thread id>
-- TEST_MESSAGE_ID=<timestamp of the message id>
-- TEST_USER_NAME=<test user name>
+| Key                    | Description                    |
+|------------------------|--------------------------------|
+| **TEST_THREAD_ID**     | timestamp of the thread id     |
+| **TEST_MESSAGE_ID**    | timestamp of the message id    |
+| **TEST_USER_NAME**     | test user name                 |
+
 
 ```bash
 uv run pytest
@@ -217,7 +223,10 @@ For security concerns, please see our [Security Policy](SECURITY.md).
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [Apache-2.0](LICENSE.txt) file for details.
+
+© 2025 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)
+
 
 ## Changelog
 
