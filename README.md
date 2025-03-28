@@ -6,7 +6,7 @@ read messages, create messages, reply to messages, mention members.
 
 ## Features
 
-- Start thread in channel with title and contents
+- Start thread in channel with title and contents, mentioning users
 - Update existing threads with message replies, mentioning users
 - Read thread replies
 - List channel team members
