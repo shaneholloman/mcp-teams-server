@@ -2,6 +2,7 @@ import logging
 from typing import List
 
 from botframework.connector.aio.operations_async import ConversationsOperations
+from markdown_it.common.entities import entities
 from msgraph.generated.models.chat_message import ChatMessage
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import \
     ChatMessageItemRequestBuilder
@@ -138,13 +139,14 @@ class TeamsClient:
         return connector_client.conversations
 
     async def update_thread(
-            self, thread_id: str, content: str
+            self, thread_id: str, content: str, member_name: str = None
     ) -> TeamsMessage:
-        """Add a message to an existing thread.
+        """Add a message to an existing thread, mentioning a user optionally.
 
         Args:
             thread_id: Thread ID to update
             content: Message content to add
+            member_name: Member name to mention (optional)
 
         Returns:
             Updated thread details
@@ -159,11 +161,26 @@ class TeamsClient:
             )
 
             async def update_thread_callback(context: TurnContext):
+                mention_member = None
+                if member_name is not None:
+                    members = await TeamsInfo.get_team_members(context, self.team_id)
+                    for member in members:
+                        if member.name == member_name:
+                            mention_member = member
+
+                entities = []
+                if mention_member is not None:
+                    result.content = f"<at>{mention_member.name}</at> {content}"
+                    mention = Mention(text=f"<at>{mention_member.name}</at>", type="mention",
+                            mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
+                    entities.append(mention)
+
                 reply = Activity(
                     type=ActivityTypes.message,
-                    text=content,
+                    text=result.content,
                     from_property=TeamsChannelAccount(id=self.teams_app_id, name="MCP Bot"),
-                    conversation=ConversationAccount(id=thread_id)
+                    conversation=ConversationAccount(id=thread_id),
+                    entities=entities
                 )
                 #
                 # Hack to get the connector client and reply to an existing activity
@@ -206,64 +223,6 @@ class TeamsClient:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
 
-    async def mention_member(
-            self,
-            thread_id: str,
-            member_name: str,
-            content: str
-    ) -> TeamsMessage:
-        """Mention a user in a thread message.
-
-        Args:
-            thread_id: Thread ID to add mention
-            member_name: name of member to mention
-            content: Message content
-
-        Returns:
-            Message details including IDs
-        """
-        try:
-            await self._initialize()
-
-            result = TeamsMessage(
-                thread_id=thread_id,
-                content=content,
-                message_id=""
-            )
-
-            async def mention_member_callback(context: TurnContext):
-                members = await TeamsInfo.get_team_members(context, self.team_id)
-                mention_member = None
-                for member in members:
-                    if member.name == member_name:
-                        mention_member = member
-
-                mention = Mention(text=f"<at>{mention_member.name}</at>", type="mention",
-                                  mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
-
-                reply = Activity(
-                    type=ActivityTypes.message,
-                    text=f'<at>{mention_member.name}</at> {content}',
-                    conversation=ConversationAccount(id=thread_id),
-                    entities=[mention]
-                )
-
-                conversations = TeamsClient._get_conversation_operations(context)
-                conversation_id = f"{context.activity.conversation.id};messageid={thread_id}"
-                response = await conversations.send_to_conversation(conversation_id=conversation_id, activity=reply)
-
-                if response is not None:
-                    result.message_id = response.id
-
-            await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
-                                                     reference=self._create_conversation_reference(),
-                                                     callback=mention_member_callback)
-
-            return result
-        except Exception as e:
-            LOGGER.error(f"Error mentioning user: {str(e)}")
-            raise
-
     async def _grant_channel_group_read(self) -> AppRoleAssignment:
         # https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
         request = AppRoleAssignment(
@@ -304,7 +263,7 @@ class TeamsClient:
             raise
 
     async def read_thread_replies(
-            self, thread_id: str, offset: int, limit: int = 100
+            self, thread_id: str, offset: int, limit: int = 50
     ) -> PagedTeamsMessages:
         """Read all replies in a thread.
 

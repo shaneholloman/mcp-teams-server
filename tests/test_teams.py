@@ -72,15 +72,8 @@ async def test_read_threads(setup_teams_client):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_update_thread(setup_teams_client, thread_id):
-    result = await setup_teams_client.update_thread(thread_id, "Thread updated content")
-    print(f'Result {result}\n')
-    assert result is not None
-
-@pytest.mark.integration
-@pytest.mark.asyncio
-async def test_mention_user(setup_teams_client, thread_id, user_name):
-    result = await setup_teams_client.mention_member(thread_id, user_name, "User mentioned")
+async def test_update_thread(setup_teams_client, thread_id, user_name):
+    result = await setup_teams_client.update_thread(thread_id, "Thread updated content with mention", user_name)
     print(f'Result {result}\n')
     assert result is not None
 

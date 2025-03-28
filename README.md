@@ -1,13 +1,13 @@
 # MCP Teams Server
 
-An MCP (Model Context Protocol) server implementation for Microsoft Teams integration, providing capabilities to 
+An MCP ([Model Context Protocol](https://modelcontextprotocol.io/introduction)) server implementation for 
+[Microsoft Teams](https://www.microsoft.com/en-us/microsoft-teams/group-chat-software/) integration, providing capabilities to 
 read messages, create messages, reply to messages, mention members.
 
 ## Features
 
 - Start thread in channel with title and contents
-- Update existing threads with message replies
-- Mention users in threads
+- Update existing threads with message replies, mentioning users
 - Read thread replies
 - List channel team members
 - Read channel messages

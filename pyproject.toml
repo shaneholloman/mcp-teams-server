@@ -16,7 +16,7 @@ dependencies = [
     "botbuilder-integration-aiohttp>=4.16.2",
     "cookiecutter==1.7.0",
     "dotenv>=0.9.9",
-    "mcp[cli]>=1.5.0",
+    "mcp[cli]>=1.6.0",
     "msgraph-sdk>=1.25.0",
     "multidict==6.2.0",
 ]
@@ -39,6 +39,5 @@ dev = [
 pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-# addopts = "-v --tb=short --cov=mcp_teams_server"
 addopts = "-v --tb=short --import-mode=importlib"
 asyncio_mode = "auto"

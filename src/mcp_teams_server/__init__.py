@@ -26,7 +26,7 @@ load_dotenv()
 
 # Config logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stderr),
@@ -82,28 +82,24 @@ async def start_thread(ctx: Context, title: str = Field(description="The thread 
 
 
 @mcp.tool(name="update_thread", description="Update an existing thread with new content")
-async def update_thread(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
-                        content: str = Field(description="The content to update in the thread")) -> TeamsMessage:
+async def update_thread(ctx: Context,
+                        thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
+                        content: str = Field(description="The content to update in the thread"),
+                        member_name: str = Field(
+                            description="Optional member name to be mentioned in the content of the thread",
+                            default=None)
+                        ) -> TeamsMessage:
     await ctx.debug(f"update_thread with thread_id={thread_id} and content={content}")
     client = _get_teams_client(ctx)
-    return await client.update_thread(thread_id, content)
-
-
-@mcp.tool(name="mention_member", description="Mention a member in an existing thread")
-async def mention_member(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
-                       member_name: str = Field("The member name"),
-                       content: str = Field("Content to be added to the thread")) -> TeamsMessage:
-    await ctx.debug(f"mention_member in thread_id={thread_id}, member_name={member_name} and content={content}")
-    client = _get_teams_client(ctx)
-    return await client.mention_member(thread_id, member_name, content)
+    return await client.update_thread(thread_id, content, member_name)
 
 
 @mcp.tool(name="read_thread", description="Read replies in a thread")
-async def read_thread(ctx: Context, thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'")) -> PagedTeamsMessages:
+async def read_thread(ctx: Context, thread_id: str = Field(
+    description="The thread ID as a string in the format '1743086901347'")) -> PagedTeamsMessages:
     await ctx.debug(f"read_thread with thread_id={thread_id}")
     client = _get_teams_client(ctx)
-    return await client.read_thread_replies(thread_id, 0, 100)
-
+    return await client.read_thread_replies(thread_id, 0, 50)
 
 @mcp.tool(name="list_threads", description="List threads in channel with pagination")
 async def list_threads(ctx: Context,
@@ -116,20 +112,17 @@ async def list_threads(ctx: Context,
     client = _get_teams_client(ctx)
     return await client.read_threads(offset, limit)
 
-
 @mcp.tool(name="get_member_by_name", description="Get a member by its name")
 async def get_member_by_name(ctx: Context, name: str = Field(description="Member name")):
     await ctx.debug(f"get_member_by_name with name={name}")
     client = _get_teams_client(ctx)
     return await client.get_member_by_name(name)
 
-
 @mcp.tool(name="list_members", description="List all members in the team")
 async def list_members(ctx: Context) -> List[TeamsMember]:
     await ctx.debug(f"list_members")
     client = _get_teams_client(ctx)
     return await client.list_members()
-
 
 def _check_required_environment():
     exit_code = None
@@ -140,7 +133,6 @@ def _check_required_environment():
             exit_code = 1
     if exit_code is not None:
         sys.exit(exit_code)
-
 
 def main() -> None:
     import argparse
