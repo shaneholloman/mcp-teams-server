@@ -75,10 +75,14 @@ def _get_teams_client(ctx: Context) -> TeamsClient:
 
 @mcp.tool(name="start_thread", description="Start a new thread with a given title and content")
 async def start_thread(ctx: Context, title: str = Field(description="The thread title"),
-                       content: str = Field(description="The thread content")) -> TeamsThread:
+                       content: str = Field(description="The thread content"),
+                       member_name: str = Field(
+                           description="Member name to mention in the thread",
+                           default=None)
+                       ) -> TeamsThread:
     await ctx.debug(f"start_thread with title={title} and content={content}")
     client = _get_teams_client(ctx)
-    return await client.start_thread(title, content)
+    return await client.start_thread(title, content, member_name)
 
 
 @mcp.tool(name="update_thread", description="Update an existing thread with new content")
@@ -86,7 +90,7 @@ async def update_thread(ctx: Context,
                         thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
                         content: str = Field(description="The content to update in the thread"),
                         member_name: str = Field(
-                            description="Optional member name to be mentioned in the content of the thread",
+                            description="Member name to mention in the thread",
                             default=None)
                         ) -> TeamsMessage:
     await ctx.debug(f"update_thread with thread_id={thread_id} and content={content}")
@@ -99,18 +103,20 @@ async def read_thread(ctx: Context, thread_id: str = Field(
     description="The thread ID as a string in the format '1743086901347'")) -> PagedTeamsMessages:
     await ctx.debug(f"read_thread with thread_id={thread_id}")
     client = _get_teams_client(ctx)
-    return await client.read_thread_replies(thread_id, 0, 50)
+    return await client.read_thread_replies(thread_id, 50)
+
 
 @mcp.tool(name="list_threads", description="List threads in channel with pagination")
 async def list_threads(ctx: Context,
-                       offset: int = Field(description="Offset of the first thread to retrieve, used for pagination.",
-                                           default=0),
                        limit: int = Field(
                            description="Maximum number of items to retrieve or page size",
-                           default=50)) -> PagedTeamsMessages:
-    await ctx.debug(f"list_threads with offset={offset} and limit={limit}")
+                           default=50),
+                       cursor: str|None = Field(description="Pagination cursor for the next page of results")
+                       ) -> PagedTeamsMessages:
+    await ctx.debug(f"list_threads with cursor={cursor} and limit={limit}")
     client = _get_teams_client(ctx)
-    return await client.read_threads(offset, limit)
+    return await client.read_threads(limit, cursor)
+
 
 @mcp.tool(name="get_member_by_name", description="Get a member by its name")
 async def get_member_by_name(ctx: Context, name: str = Field(description="Member name")):
@@ -118,11 +124,13 @@ async def get_member_by_name(ctx: Context, name: str = Field(description="Member
     client = _get_teams_client(ctx)
     return await client.get_member_by_name(name)
 
+
 @mcp.tool(name="list_members", description="List all members in the team")
 async def list_members(ctx: Context) -> List[TeamsMember]:
     await ctx.debug(f"list_members")
     client = _get_teams_client(ctx)
     return await client.list_members()
+
 
 def _check_required_environment():
     exit_code = None
@@ -133,6 +141,7 @@ def _check_required_environment():
             exit_code = 1
     if exit_code is not None:
         sys.exit(exit_code)
+
 
 def main() -> None:
     import argparse

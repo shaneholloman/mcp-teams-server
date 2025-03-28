@@ -26,25 +26,30 @@ from msgraph.generated.teams.item.channels.item.messages.messages_request_builde
 
 LOGGER = logging.getLogger(__name__)
 
+
 class TeamsThread(BaseModel):
     thread_id: str = Field(description="Thread ID as a string in the format '1743086901347'")
     title: str = Field(description="Message title")
     content: str = Field(description="Message content")
+
 
 class TeamsMessage(BaseModel):
     thread_id: str = Field(description="Thread ID as a string in the format '1743086901347'")
     message_id: str = Field(description="Message ID")
     content: str = Field(description="Message content")
 
+
 class TeamsMember(BaseModel):
     name: str = Field(description="Member name used in mentions and user information cards")
     email: str = Field(description="Member email")
 
+
 class PagedTeamsMessages(BaseModel):
-    offset: int = Field(description="Paged item offset, number starts in 0")
-    limit: int = Field(description="Page limit. Number of items to retrieve")
+    cursor: str | None = Field(description="Cursor to retrieve the next page of messages.")
+    limit: int = Field(description="Page limit, maximum number of items to retrieve")
     total: int = Field(description="Total items available for retrieval")
-    items: List[TeamsMessage] = Field(description="List of Team messages")
+    items: List[TeamsMessage] = Field(description="List of channel messages or threads")
+
 
 class TeamsClient:
     #
@@ -89,18 +94,19 @@ class TeamsClient:
                 self.service_url = context.activity.service_url
 
             await self.adapter.continue_conversation(bot_app_id=self.teams_app_id,
-                                               reference=self._create_conversation_reference(),
-                                               callback=context_callback)
+                                                     reference=self._create_conversation_reference(),
+                                                     callback=context_callback)
         return self.service_url
 
     async def start_thread(
-            self, title: str, content: str
+            self, title: str, content: str, member_name: str
     ) -> TeamsThread:
         """Start a new thread in a channel.
 
         Args:
             title: Thread title
             content: Initial thread content
+            member_name: Member name to mention in content
 
         Returns:
             Created thread details including ID
@@ -115,10 +121,25 @@ class TeamsClient:
             )
 
             async def start_thread_callback(context: TurnContext):
+                mention_member = None
+                if member_name is not None:
+                    members = await TeamsInfo.get_team_members(context, self.team_id)
+                    for member in members:
+                        if member.name == member_name:
+                            mention_member = member
+
+                entities = []
+                if mention_member is not None:
+                    result.content = f"<at>{mention_member.name}</at> {content}"
+                    mention = Mention(text=f"<at>{mention_member.name}</at>", type="mention",
+                                      mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
+                    entities.append(mention)
+
                 response = await context.send_activity(activity_or_text=Activity(
                     type=ActivityTypes.message,
                     topic_name=title,
-                    text=content
+                    text=result.content,
+                    entities=entities
                 ))
                 if response is not None:
                     result.thread_id = response.id
@@ -172,7 +193,7 @@ class TeamsClient:
                 if mention_member is not None:
                     result.content = f"<at>{mention_member.name}</at> {content}"
                     mention = Mention(text=f"<at>{mention_member.name}</at>", type="mention",
-                            mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
+                                      mentioned=ChannelAccount(id=mention_member.id, name=mention_member.name))
                     entities.append(mention)
 
                 reply = Activity(
@@ -235,11 +256,11 @@ class TeamsClient:
         LOGGER.info(f"Granted app role {result}")
         return result
 
-    async def read_threads(self, offset: int, limit: int = 50) -> PagedTeamsMessages:
+    async def read_threads(self, limit: int = 50, cursor: str = None) -> PagedTeamsMessages:
         """Read all threads in configured teams channel.
         
         Args:
-            offset: The pagination offset or first result to return.
+            cursor: The pagination cursor.
             
             limit: The pagination page size
         
@@ -247,12 +268,17 @@ class TeamsClient:
             Paged team channel messages containing
         """
         try:
-            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(skip=offset, top=limit)
+            query = MessagesRequestBuilder.MessagesRequestBuilderGetQueryParameters(top=limit)
             request = MessagesRequestBuilder.MessagesRequestBuilderGetRequestConfiguration(query_parameters=query)
-            response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
-                self.teams_channel_id).messages.get(request_configuration=request)
+            if cursor is not None:
+                response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                    self.teams_channel_id).messages.with_url(cursor).get(request_configuration=request)
+            else:
+                response = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                    self.teams_channel_id).messages.get(request_configuration=request)
 
-            result = PagedTeamsMessages(offset=offset, limit=limit, total=response.odata_count, items=[])
+            result = PagedTeamsMessages(cursor=response.odata_next_link, limit=limit, total=response.odata_count,
+                                        items=[])
             for message in response.value:
                 result.items.append(
                     TeamsMessage(message_id=message.id, content=message.body.content, thread_id=message.id))
@@ -263,27 +289,33 @@ class TeamsClient:
             raise
 
     async def read_thread_replies(
-            self, thread_id: str, offset: int, limit: int = 50
+            self, thread_id: str, limit: int = 50, cursor: str = None
     ) -> PagedTeamsMessages:
         """Read all replies in a thread.
 
         Args:
             thread_id: Thread ID to read
-            offset: The pagination offset
+            cursor: The pagination cursor
             limit: The pagination page size
 
         Returns:
             List of thread messages
         """
         try:
-            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters(skip=offset, top=limit)
+            params = RepliesRequestBuilder.RepliesRequestBuilderGetQueryParameters(top=limit)
             request = RepliesRequestBuilder.RepliesRequestBuilderGetRequestConfiguration(
                 query_parameters=params)
 
-            replies = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
-                self.teams_channel_id).messages.by_chat_message_id(thread_id).replies.get(request_configuration=request)
+            if cursor is not None:
+                replies = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                    self.teams_channel_id).messages.by_chat_message_id(thread_id).replies.with_url(cursor).get(
+                    request_configuration=request)
+            else:
+                replies = await self.graph_client.teams.by_team_id(self.team_id).channels.by_channel_id(
+                    self.teams_channel_id).messages.by_chat_message_id(thread_id).replies.get(
+                    request_configuration=request)
 
-            result = PagedTeamsMessages(offset=offset, limit=limit, total=replies.odata_count, items=[])
+            result = PagedTeamsMessages(cursor=cursor, limit=limit, total=replies.odata_count, items=[])
 
             if replies is not None:
                 for reply in replies.value:
@@ -331,7 +363,7 @@ class TeamsClient:
             LOGGER.error(f"Error listing members: {str(e)}")
             raise
 
-    async def get_member_by_name(self, name: str) -> TeamsMember|None:
+    async def get_member_by_name(self, name: str) -> TeamsMember | None:
         members = await self.list_members()
         for member in members:
             if member.name == name:

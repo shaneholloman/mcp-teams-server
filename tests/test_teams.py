@@ -57,16 +57,16 @@ def user_name() -> str:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_start_thread(setup_teams_client):
+async def test_start_thread(setup_teams_client, user_name):
     LOGGER.info(f'test_start_thread in team: {setup_teams_client.team_id} and channel {setup_teams_client.teams_channel_id}')
-    result = await setup_teams_client.start_thread("First thread", "First thread content")
+    result = await setup_teams_client.start_thread("First thread", "First thread content with mention", user_name)
     print(f'Result {result}\n')
     assert result is not None
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_read_threads(setup_teams_client):
-    result = await setup_teams_client.read_threads(0, 50)
+    result = await setup_teams_client.read_threads(50)
     print(f'Result {result}\n')
     assert result is not None
 
