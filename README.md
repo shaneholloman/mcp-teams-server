@@ -95,7 +95,8 @@ https://teams.microsoft.com/l/channel/[TEAMS_CHANNEL_ID]/McpBot?groupId=[TEAM_ID
 
 ## Usage
 
-Set up the following environment variables in your shell or in an .env file:
+Set up the following environment variables in your shell or in an .env file. You can use [sample file](./sample.env) 
+as a template:
 
 | Key                     | Description                                |
 |-------------------------|--------------------------------------------|
@@ -115,7 +116,7 @@ uv run mcp-teams-server
 
 ## Development
 
-Integration tests require the set up the following environment variables:
+Integration tests require the set-up the following environment variables:
 
 | Key                    | Description                    |
 |------------------------|--------------------------------|
@@ -181,7 +182,7 @@ docker run -it inditextech/mcp-teams-server
 }
 ```
 
-### Setup Cline to use docker image
+### Setup Cline to use docker image through WSL
 
 ```yaml 
 {
