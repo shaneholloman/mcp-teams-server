@@ -48,4 +48,10 @@ Make sure that you have:
 - Meet the [prerequisites](#prerequisites).
 - [uv](https://github.com/astral-sh/uv) installed
 - [python](https://www.python.org/) 3.10 or later installed
-- Set up integration with microsoft teams by your own means
+- Set up integration with Microsoft Teams by your own means
+- Run integration tests to verify Microsoft Teams integration
+
+
+```bash
+uv run ruff format .
+```

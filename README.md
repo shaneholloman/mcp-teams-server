@@ -31,7 +31,7 @@ cd mcp-teams-server
 
 ```bash
 uv venv
-uv sync
+uv sync --frozen --all-extras --dev
 ```
 
 ## Teams configuration

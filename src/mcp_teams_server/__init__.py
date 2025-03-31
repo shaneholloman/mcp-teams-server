@@ -6,12 +6,21 @@ from typing import AsyncIterator, List
 from pydantic import Field
 
 from azure.identity.aio import ClientSecretCredential
-from botbuilder.integration.aiohttp import CloudAdapter, ConfigurationBotFrameworkAuthentication
+from botbuilder.integration.aiohttp import (
+    CloudAdapter,
+    ConfigurationBotFrameworkAuthentication,
+)
 from mcp.server.fastmcp import FastMCP, Context
 from msgraph import GraphServiceClient
 
 from .config import BotConfiguration
-from .teams import TeamsClient, TeamsMessage, TeamsThread, TeamsMember, PagedTeamsMessages
+from .teams import (
+    TeamsClient,
+    TeamsMessage,
+    TeamsThread,
+    TeamsMember,
+    PagedTeamsMessages,
+)
 import sys
 import logging
 from dotenv import load_dotenv
@@ -27,17 +36,23 @@ load_dotenv()
 # Config logging
 logging.basicConfig(
     level=logging.ERROR,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stderr),
-        logging.FileHandler('mcp_teams_server.log')
-    ]
+        logging.FileHandler("mcp_teams_server.log"),
+    ],
 )
 
 LOGGER = logging.getLogger(__name__)
 
-REQUIRED_ENV_VARS = ["TEAMS_APP_ID", "TEAMS_APP_PASSWORD", "TEAMS_APP_TYPE", "TEAMS_APP_TENANT_ID", "TEAM_ID",
-                     "TEAMS_CHANNEL_ID"]
+REQUIRED_ENV_VARS = [
+    "TEAMS_APP_ID",
+    "TEAMS_APP_PASSWORD",
+    "TEAMS_APP_TYPE",
+    "TEAMS_APP_TENANT_ID",
+    "TEAM_ID",
+    "TEAMS_CHANNEL_ID",
+]
 
 
 @dataclass
@@ -55,14 +70,18 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
 
     # Graph client construction
     credentials = ClientSecretCredential(
-        bot_config.APP_TENANTID,
-        bot_config.APP_ID,
-        bot_config.APP_PASSWORD
+        bot_config.APP_TENANTID, bot_config.APP_ID, bot_config.APP_PASSWORD
     )
-    scopes = ['https://graph.microsoft.com/.default']
+    scopes = ["https://graph.microsoft.com/.default"]
     graph_client = GraphServiceClient(credentials=credentials, scopes=scopes)
 
-    client = TeamsClient(adapter, graph_client, bot_config.APP_ID, bot_config.TEAM_ID, bot_config.TEAMS_CHANNEL_ID)
+    client = TeamsClient(
+        adapter,
+        graph_client,
+        bot_config.APP_ID,
+        bot_config.TEAM_ID,
+        bot_config.TEAMS_CHANNEL_ID,
+    )
     yield AppContext(client=client)
 
 
@@ -73,53 +92,71 @@ def _get_teams_client(ctx: Context) -> TeamsClient:
     return ctx.request_context.lifespan_context.client
 
 
-@mcp.tool(name="start_thread", description="Start a new thread with a given title and content")
-async def start_thread(ctx: Context, title: str = Field(description="The thread title"),
-                       content: str = Field(description="The thread content"),
-                       member_name: str = Field(
-                           description="Member name to mention in the thread",
-                           default=None)
-                       ) -> TeamsThread:
+@mcp.tool(
+    name="start_thread", description="Start a new thread with a given title and content"
+)
+async def start_thread(
+    ctx: Context,
+    title: str = Field(description="The thread title"),
+    content: str = Field(description="The thread content"),
+    member_name: str = Field(
+        description="Member name to mention in the thread", default=None
+    ),
+) -> TeamsThread:
     await ctx.debug(f"start_thread with title={title} and content={content}")
     client = _get_teams_client(ctx)
     return await client.start_thread(title, content, member_name)
 
 
-@mcp.tool(name="update_thread", description="Update an existing thread with new content")
-async def update_thread(ctx: Context,
-                        thread_id: str = Field(description="The thread ID as a string in the format '1743086901347'"),
-                        content: str = Field(description="The content to update in the thread"),
-                        member_name: str = Field(
-                            description="Member name to mention in the thread",
-                            default=None)
-                        ) -> TeamsMessage:
+@mcp.tool(
+    name="update_thread", description="Update an existing thread with new content"
+)
+async def update_thread(
+    ctx: Context,
+    thread_id: str = Field(
+        description="The thread ID as a string in the format '1743086901347'"
+    ),
+    content: str = Field(description="The content to update in the thread"),
+    member_name: str = Field(
+        description="Member name to mention in the thread", default=None
+    ),
+) -> TeamsMessage:
     await ctx.debug(f"update_thread with thread_id={thread_id} and content={content}")
     client = _get_teams_client(ctx)
     return await client.update_thread(thread_id, content, member_name)
 
 
 @mcp.tool(name="read_thread", description="Read replies in a thread")
-async def read_thread(ctx: Context, thread_id: str = Field(
-    description="The thread ID as a string in the format '1743086901347'")) -> PagedTeamsMessages:
+async def read_thread(
+    ctx: Context,
+    thread_id: str = Field(
+        description="The thread ID as a string in the format '1743086901347'"
+    ),
+) -> PagedTeamsMessages:
     await ctx.debug(f"read_thread with thread_id={thread_id}")
     client = _get_teams_client(ctx)
     return await client.read_thread_replies(thread_id, 50)
 
 
 @mcp.tool(name="list_threads", description="List threads in channel with pagination")
-async def list_threads(ctx: Context,
-                       limit: int = Field(
-                           description="Maximum number of items to retrieve or page size",
-                           default=50),
-                       cursor: str|None = Field(description="Pagination cursor for the next page of results")
-                       ) -> PagedTeamsMessages:
+async def list_threads(
+    ctx: Context,
+    limit: int = Field(
+        description="Maximum number of items to retrieve or page size", default=50
+    ),
+    cursor: str | None = Field(
+        description="Pagination cursor for the next page of results"
+    ),
+) -> PagedTeamsMessages:
     await ctx.debug(f"list_threads with cursor={cursor} and limit={limit}")
     client = _get_teams_client(ctx)
     return await client.read_threads(limit, cursor)
 
 
 @mcp.tool(name="get_member_by_name", description="Get a member by its name")
-async def get_member_by_name(ctx: Context, name: str = Field(description="Member name")):
+async def get_member_by_name(
+    ctx: Context, name: str = Field(description="Member name")
+):
     await ctx.debug(f"get_member_by_name with name={name}")
     client = _get_teams_client(ctx)
     return await client.get_member_by_name(name)
@@ -145,16 +182,25 @@ def _check_required_environment():
 
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(
         description="MCP Teams Server to allow Microsoft Teams interaction"
     )
-    parser.add_argument("-t", "--transport", nargs=1, type=str, help="MCP Server Transport: stdio or sse",
-                        default="stdio",
-                        choices=["stdio", "sse"])
+    parser.add_argument(
+        "-t",
+        "--transport",
+        nargs=1,
+        type=str,
+        help="MCP Server Transport: stdio or sse",
+        default="stdio",
+        choices=["stdio", "sse"],
+    )
 
     args = parser.parse_args()
 
-    LOGGER.info(f"Starting MCP Teams Server \"{__version__}\" with transport \"{args.transport}\"")
+    LOGGER.info(
+        f'Starting MCP Teams Server "{__version__}" with transport "{args.transport}"'
+    )
     _check_required_environment()
     mcp.run(transport=args.transport)
 

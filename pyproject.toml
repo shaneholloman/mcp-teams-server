@@ -8,18 +8,22 @@ authors = [{ name = "Industria de Diseño Textil S.A." }]
 maintainers = [
     { name = "Mariano Alonso Ortiz", email = "marianoao@inditex.com" },
 ]
+license = { text = "Apache-2.0" }
 requires-python = ">=3.10"
 dependencies = [
     "aiohttp==3.10.5",
     "asyncio>=3.4.3",
     "botbuilder-core>=4.16.2",
     "botbuilder-integration-aiohttp>=4.16.2",
-    "cookiecutter==1.7.0",
     "dotenv>=0.9.9",
     "mcp[cli]>=1.6.0",
     "msgraph-sdk>=1.25.0",
     "multidict==6.2.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/InditexTech/mcp-teams-server"
+Issues = "https://github.com/InditexTech/mcp-teams-server/issues"
 
 [project.scripts]
 mcp-teams-server = "mcp_teams_server:main"
@@ -33,11 +37,14 @@ dev = [
     "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
     "pytest-cov>=6.0.0",
+    "ruff>=0.11.2",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --tb=short --import-mode=importlib"
+addopts = "-v --tb=short --import-mode=importlib --strict-markers"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+markers = "integration: integration tests"

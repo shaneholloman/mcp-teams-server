@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 
+
 @dataclass
 class BotConfiguration:
     def __init__(self):
