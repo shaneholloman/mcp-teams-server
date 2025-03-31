@@ -126,7 +126,7 @@ Integration tests require the set-up the following environment variables:
 
 
 ```bash
-uv run pytest
+uv run pytest -m integration
 ```
 
 ### Build docker image

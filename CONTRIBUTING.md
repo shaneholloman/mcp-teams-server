@@ -51,7 +51,16 @@ Make sure that you have:
 - Set up integration with Microsoft Teams by your own means
 - Run integration tests to verify Microsoft Teams integration
 
+Please remember tu run linting locally before committing any changes:
 
 ```bash
+uv run ruff check . --fix
 uv run ruff format .
 ```
+
+It is recommended to run a type checker:
+
+```bash
+uv run pyright
+```
+

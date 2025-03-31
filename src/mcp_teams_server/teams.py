@@ -1,8 +1,21 @@
 import logging
-from typing import List
+from uuid import UUID
 
+from botbuilder.core import BotAdapter, TurnContext
+from botbuilder.core.teams import TeamsInfo
+from botbuilder.integration.aiohttp import CloudAdapter
+from botbuilder.schema import (
+    Activity,
+    ActivityTypes,
+    ChannelAccount,
+    ConversationAccount,
+    ConversationReference,
+    Mention,
+)
+from botbuilder.schema.teams import TeamsChannelAccount
 from botframework.connector.aio.operations_async import ConversationsOperations
 from kiota_abstractions.base_request_configuration import RequestConfiguration
+from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.models.chat_message import ChatMessage
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import (
     ChatMessageItemRequestBuilder,
@@ -10,26 +23,11 @@ from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_
 from msgraph.generated.teams.item.channels.item.messages.item.replies.replies_request_builder import (
     RepliesRequestBuilder,
 )
-from pydantic import BaseModel, Field
-from uuid import UUID
-
-from botbuilder.core import TurnContext, BotAdapter
-from botbuilder.core.teams import TeamsInfo
-from botbuilder.integration.aiohttp import CloudAdapter
-from botbuilder.schema import (
-    Activity,
-    ActivityTypes,
-    ConversationReference,
-    ChannelAccount,
-    ConversationAccount,
-    Mention,
-)
-from botbuilder.schema.teams import TeamsChannelAccount
-from msgraph import GraphServiceClient
-from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.teams.item.channels.item.messages.messages_request_builder import (
     MessagesRequestBuilder,
 )
+from msgraph.graph_service_client import GraphServiceClient
+from pydantic import BaseModel, Field
 
 LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +61,7 @@ class PagedTeamsMessages(BaseModel):
     )
     limit: int = Field(description="Page limit, maximum number of items to retrieve")
     total: int = Field(description="Total items available for retrieval")
-    items: List[TeamsMessage] = Field(description="List of channel messages or threads")
+    items: list[TeamsMessage] = Field(description="List of channel messages or threads")
 
 
 class TeamsClient:
@@ -113,7 +111,7 @@ class TeamsClient:
             ),
         )
 
-    async def _initialize(self) -> str:
+    async def _initialize(self):
         if not self.service_url:
 
             def context_callback(context: TurnContext):
@@ -124,10 +122,9 @@ class TeamsClient:
                 reference=self._create_conversation_reference(),
                 callback=context_callback,
             )
-        return self.service_url
 
     async def start_thread(
-        self, title: str, content: str, member_name: str
+        self, title: str, content: str, member_name: str | None = None
     ) -> TeamsThread:
         """Start a new thread in a channel.
 
@@ -190,10 +187,10 @@ class TeamsClient:
     def _get_conversation_operations(context: TurnContext) -> ConversationsOperations:
         # Hack to get the connector client and reply to an existing activity
         connector_client = context.turn_state[BotAdapter.BOT_CONNECTOR_CLIENT_KEY]
-        return connector_client.conversations
+        return connector_client.conversations  # pyright: ignore
 
     async def update_thread(
-        self, thread_id: str, content: str, member_name: str = None
+        self, thread_id: str, content: str, member_name: str | None = None
     ) -> TeamsMessage:
         """Add a message to an existing thread, mentioning a user optionally.
 
@@ -247,14 +244,14 @@ class TeamsClient:
                 # Hack to reply to conversation https://github.com/microsoft/botframework-sdk/issues/6626
                 #
                 conversation_id = (
-                    f"{context.activity.conversation.id};messageid={thread_id}"
+                    f"{context.activity.conversation.id};messageid={thread_id}" # pyright: ignore
                 )
                 response = await conversations.send_to_conversation(
                     conversation_id=conversation_id, activity=reply
                 )
 
                 if response is not None:
-                    result.message_id = response.id
+                    result.message_id = response.id # pyright: ignore
 
             await self.adapter.continue_conversation(
                 bot_app_id=self.teams_app_id,
@@ -290,7 +287,7 @@ class TeamsClient:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
 
-    async def _grant_channel_group_read(self) -> AppRoleAssignment:
+    async def _grant_channel_group_read(self) -> AppRoleAssignment | None:
         # https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
         request = AppRoleAssignment(
             principal_id=UUID(self.teams_app_id),
@@ -304,7 +301,7 @@ class TeamsClient:
         return result
 
     async def read_threads(
-        self, limit: int = 50, cursor: str = None
+        self, limit: int = 50, cursor: str | None = None
     ) -> PagedTeamsMessages:
         """Read all threads in configured teams channel.
 
@@ -336,19 +333,20 @@ class TeamsClient:
                 )
 
             result = PagedTeamsMessages(
-                cursor=response.odata_next_link,
+                cursor=response.odata_next_link, # pyright: ignore
                 limit=limit,
-                total=response.odata_count,
+                total=response.odata_count,  # pyright: ignore
                 items=[],
             )
-            for message in response.value:
-                result.items.append(
-                    TeamsMessage(
-                        message_id=message.id,
-                        content=message.body.content,
-                        thread_id=message.id,
+            if response.value is not None: # pyright: ignore
+                for message in response.value: # pyright: ignore
+                    result.items.append(
+                        TeamsMessage(
+                            message_id=message.id, # pyright: ignore
+                            content=message.body.content, # pyright: ignore
+                            thread_id=message.id, # pyright: ignore
+                        )
                     )
-                )
 
             return result
         except Exception as e:
@@ -356,7 +354,7 @@ class TeamsClient:
             raise
 
     async def read_thread_replies(
-        self, thread_id: str, limit: int = 50, cursor: str = None
+        self, thread_id: str, limit: int = 50, cursor: str|None = None
     ) -> PagedTeamsMessages:
         """Read all replies in a thread.
 
@@ -391,16 +389,19 @@ class TeamsClient:
                 )
 
             result = PagedTeamsMessages(
-                cursor=cursor, limit=limit, total=replies.odata_count, items=[]
+                cursor=cursor,
+                limit=limit,
+                total=replies.odata_count,  # pyright: ignore
+                items=[],
             )
 
-            if replies is not None:
+            if replies is not None and replies.value is not None:
                 for reply in replies.value:
                     result.items.append(
                         TeamsMessage(
-                            message_id=reply.id,
-                            content=reply.body.content,
-                            thread_id=reply.reply_to_id,
+                            message_id=reply.id, # pyright: ignore
+                            content=reply.body.content, # pyright: ignore
+                            thread_id=reply.reply_to_id, # pyright: ignore
                         )
                     )
 
@@ -409,7 +410,7 @@ class TeamsClient:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
-    async def read_message(self, message_id: str) -> ChatMessage:
+    async def read_message(self, message_id: str) -> ChatMessage | None:
         try:
             query = ChatMessageItemRequestBuilder.ChatMessageItemRequestBuilderGetQueryParameters()
             request = RequestConfiguration(query_parameters=query)
@@ -424,7 +425,7 @@ class TeamsClient:
             LOGGER.error(f"Error reading thread: {str(e)}")
             raise
 
-    async def list_members(self) -> List[TeamsMember]:
+    async def list_members(self) -> list[TeamsMember]:
         """List all members in the configured team.
 
         Returns:

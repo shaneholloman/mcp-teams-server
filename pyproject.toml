@@ -34,17 +34,32 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "pyright>=1.1.398",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
     "pytest-cov>=6.0.0",
     "ruff>=0.11.2",
 ]
 
+[tool.ruff]
+# Set the maximum line length to 79.
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"src/mcp_teams_server/teams.py" = ["E501"]
+
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "-v --tb=short --import-mode=importlib --strict-markers"
+addopts = "-v --tb=short --import-mode=importlib --strict-markers -m \"not integration\""
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
-markers = "integration: integration tests"
+markers = [
+    "integration: integration tests",
+]

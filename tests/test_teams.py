@@ -1,20 +1,18 @@
+import logging
 import os
+import sys
 
 import pytest
 from azure.identity.aio import ClientSecretCredential
-
 from botbuilder.integration.aiohttp import (
     CloudAdapter,
     ConfigurationBotFrameworkAuthentication,
 )
-from msgraph import GraphServiceClient
+from dotenv import load_dotenv
+from msgraph.graph_service_client import GraphServiceClient
 
 from mcp_teams_server.config import BotConfiguration
 from mcp_teams_server.teams import TeamsClient
-
-import logging
-import sys
-from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -49,17 +47,17 @@ def setup_teams_client() -> TeamsClient:
 
 
 @pytest.fixture()
-def thread_id() -> str:
+def thread_id() -> str | None:
     return os.environ.get("TEST_THREAD_ID")
 
 
 @pytest.fixture()
-def message_id() -> str:
+def message_id() -> str | None:
     return os.environ.get("TEST_MESSAGE_ID")
 
 
 @pytest.fixture()
-def user_name() -> str:
+def user_name() -> str | None:
     return os.environ.get("TEST_USER_NAME")
 
 
@@ -67,7 +65,8 @@ def user_name() -> str:
 @pytest.mark.asyncio
 async def test_start_thread(setup_teams_client, user_name):
     LOGGER.info(
-        f"test_start_thread in team: {setup_teams_client.team_id} and channel {setup_teams_client.teams_channel_id}"
+        f"test_start_thread in team: {setup_teams_client.team_id} "
+        f"and channel {setup_teams_client.teams_channel_id}"
     )
     result = await setup_teams_client.start_thread(
         "First thread", "First thread content with mention", user_name

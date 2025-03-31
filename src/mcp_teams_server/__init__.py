@@ -1,29 +1,30 @@
+import logging
 import os
+import sys
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
-from typing import AsyncIterator, List
-from pydantic import Field
+from typing import Optional
 
 from azure.identity.aio import ClientSecretCredential
 from botbuilder.integration.aiohttp import (
     CloudAdapter,
     ConfigurationBotFrameworkAuthentication,
 )
-from mcp.server.fastmcp import FastMCP, Context
-from msgraph import GraphServiceClient
+from dotenv import load_dotenv
+from mcp.server.fastmcp import Context, FastMCP
+from msgraph.graph_service_client import GraphServiceClient
+from pydantic import Field
 
 from .config import BotConfiguration
 from .teams import (
+    PagedTeamsMessages,
     TeamsClient,
+    TeamsMember,
     TeamsMessage,
     TeamsThread,
-    TeamsMember,
-    PagedTeamsMessages,
 )
-import sys
-import logging
-from dotenv import load_dotenv
 
 try:
     __version__ = metadata.version("mcp-teams-server")
@@ -99,7 +100,7 @@ async def start_thread(
     ctx: Context,
     title: str = Field(description="The thread title"),
     content: str = Field(description="The thread content"),
-    member_name: str = Field(
+    member_name: str | None = Field(
         description="Member name to mention in the thread", default=None
     ),
 ) -> TeamsThread:
@@ -117,7 +118,7 @@ async def update_thread(
         description="The thread ID as a string in the format '1743086901347'"
     ),
     content: str = Field(description="The content to update in the thread"),
-    member_name: str = Field(
+    member_name: str | None = Field(
         description="Member name to mention in the thread", default=None
     ),
 ) -> TeamsMessage:
@@ -145,7 +146,7 @@ async def list_threads(
         description="Maximum number of items to retrieve or page size", default=50
     ),
     cursor: str | None = Field(
-        description="Pagination cursor for the next page of results"
+        description="Pagination cursor for the next page of results", default=None
     ),
 ) -> PagedTeamsMessages:
     await ctx.debug(f"list_threads with cursor={cursor} and limit={limit}")
@@ -163,8 +164,8 @@ async def get_member_by_name(
 
 
 @mcp.tool(name="list_members", description="List all members in the team")
-async def list_members(ctx: Context) -> List[TeamsMember]:
-    await ctx.debug(f"list_members")
+async def list_members(ctx: Context) -> list[TeamsMember]:
+    await ctx.debug("list_members")
     client = _get_teams_client(ctx)
     return await client.list_members()
 
