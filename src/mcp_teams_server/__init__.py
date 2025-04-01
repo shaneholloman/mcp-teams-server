@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2025 INDUSTRIA DE DISEÑO TEXTIL, S.A. (INDITEX, S.A.)
+# SPDX-License-Identifier: Apache-2.0
 import logging
 import os
 import sys
@@ -5,7 +7,6 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
-from typing import Optional
 
 from azure.identity.aio import ClientSecretCredential
 from botbuilder.integration.aiohttp import (
@@ -40,7 +41,6 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stderr),
-        logging.FileHandler("mcp_teams_server.log"),
     ],
 )
 

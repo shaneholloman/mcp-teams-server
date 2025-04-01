@@ -134,13 +134,13 @@ uv run pytest -m integration
 A docker image is available to run MCP server:
 
 ```bash
-docker build . -t inditextech/mcp-teams-server
+docker build . -t InditexTech/mcp-teams-server
 ```
 
 ### Run interactively docker image
 
 ```bash
-docker run -it inditextech/mcp-teams-server
+docker run -it InditexTech/mcp-teams-server
 ```
 
 ### Setup Claude desktop to use docker image
@@ -166,7 +166,7 @@ docker run -it inditextech/mcp-teams-server
         "TEAM_ID",
         "-e",
         "TEAMS_CHANNEL_ID",
-        "inditextech/mcp-teams-server"
+        "InditexTech/mcp-teams-server"
       ],
       "env": {
         "TEAMS_APP_ID": "<fill_me_with_proper_uuid>",
@@ -187,7 +187,7 @@ docker run -it inditextech/mcp-teams-server
 ```yaml 
 {
   "mcpServers": {
-    "github.com/inditextech/mcp-teams-server/tree/main": {
+    "github.com/InditexTech/mcp-teams-server/tree/main": {
       "command": "wsl",
       "args": [
         "TEAMS_APP_ID=<fill_me_with_proper_uuid>",
@@ -200,7 +200,7 @@ docker run -it inditextech/mcp-teams-server
         "run",
         "-i",
         "--rm",
-        "inditextech/mcp-teams-server"
+        "InditexTech/mcp-teams-server"
       ],
       "env": {
         "DOCKER_HOST": "unix:///var/run/docker.sock"

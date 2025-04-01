@@ -154,7 +154,7 @@
       "rule": {
         "type": "file-starts-with",
         "options": {
-          "globsAll": ["./**/*.go"],
+          "globsAll": ["./**/*.py"],
           "lineCount": 5,
           "patterns": ["Copyright", "License"],
           "flags": "i"
@@ -220,7 +220,7 @@
       "rule": {
         "type": "file-existence",
         "options": {
-          "globsAny": ["setup.py", "requirements.txt"]
+          "globsAny": ["setup.py", "requirements.txt", "pyproject.toml"]
         }
       }
     },

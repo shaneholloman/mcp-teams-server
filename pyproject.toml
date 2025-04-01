@@ -1,6 +1,6 @@
 [project]
 name = "mcp-teams-server"
-version = "0.1.0"
+version = "1.0.0"
 description = "An MCP server implementation for Microsoft Teams integration"
 readme = "README.md"
 keywords = ["mcp", "llm", "automation", "Microsoft Teams"]
@@ -34,15 +34,17 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "mock>=5.2.0",
+    "pyproject-parser[cli]>=0.13.0",
     "pyright>=1.1.398",
     "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
     "pytest-cov>=6.0.0",
+    "reuse>=5.0.2",
     "ruff>=0.11.2",
 ]
 
 [tool.ruff]
-# Set the maximum line length to 79.
 line-length = 88
 target-version = "py310"
 
@@ -62,4 +64,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 markers = [
     "integration: integration tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning"
 ]
