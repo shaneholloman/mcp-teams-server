@@ -12,4 +12,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic Teams integration through MCP tools
 - Documentation for setup and usage
 - Security guidelines and policies
-- Basic workflows for PR verify and release
+- Basic workflows for PR verify and release docker image
