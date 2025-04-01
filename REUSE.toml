@@ -9,11 +9,14 @@ path = [
     ".dockerignore",
     ".github/**",
     "*.md",
+    ".python-version",
     "repolinter.json",
     "REUSE.toml",
     "pyproject.toml",
     "Dockerfile",
     "doc/**",
+    "app/*",
+    "sample.env",
     "uv.lock",
 ]
 SPDX-FileCopyrightText = "2025 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)"
