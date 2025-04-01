@@ -246,14 +246,14 @@ class TeamsClient:
                 # Hack to reply to conversation https://github.com/microsoft/botframework-sdk/issues/6626
                 #
                 conversation_id = (
-                    f"{context.activity.conversation.id};messageid={thread_id}" # pyright: ignore
+                    f"{context.activity.conversation.id};messageid={thread_id}"  # pyright: ignore
                 )
                 response = await conversations.send_to_conversation(
                     conversation_id=conversation_id, activity=reply
                 )
 
                 if response is not None:
-                    result.message_id = response.id # pyright: ignore
+                    result.message_id = response.id  # pyright: ignore
 
             await self.adapter.continue_conversation(
                 bot_app_id=self.teams_app_id,
@@ -335,18 +335,18 @@ class TeamsClient:
                 )
 
             result = PagedTeamsMessages(
-                cursor=response.odata_next_link, # pyright: ignore
+                cursor=response.odata_next_link,  # pyright: ignore
                 limit=limit,
                 total=response.odata_count,  # pyright: ignore
                 items=[],
             )
-            if response.value is not None: # pyright: ignore
-                for message in response.value: # pyright: ignore
+            if response.value is not None:  # pyright: ignore
+                for message in response.value:  # pyright: ignore
                     result.items.append(
                         TeamsMessage(
-                            message_id=message.id, # pyright: ignore
-                            content=message.body.content, # pyright: ignore
-                            thread_id=message.id, # pyright: ignore
+                            message_id=message.id,  # pyright: ignore
+                            content=message.body.content,  # pyright: ignore
+                            thread_id=message.id,  # pyright: ignore
                         )
                     )
 
@@ -356,7 +356,7 @@ class TeamsClient:
             raise
 
     async def read_thread_replies(
-        self, thread_id: str, limit: int = 50, cursor: str|None = None
+        self, thread_id: str, limit: int = 50, cursor: str | None = None
     ) -> PagedTeamsMessages:
         """Read all replies in a thread.
 
@@ -401,9 +401,9 @@ class TeamsClient:
                 for reply in replies.value:
                     result.items.append(
                         TeamsMessage(
-                            message_id=reply.id, # pyright: ignore
-                            content=reply.body.content, # pyright: ignore
-                            thread_id=reply.reply_to_id, # pyright: ignore
+                            message_id=reply.id,  # pyright: ignore
+                            content=reply.body.content,  # pyright: ignore
+                            thread_id=reply.reply_to_id,  # pyright: ignore
                         )
                     )
 

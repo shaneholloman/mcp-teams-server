@@ -61,7 +61,7 @@ jobs:
       - name: Sync project
         run: uv sync --frozen --all-extras --dev --python 3.10
 
-      - name: Pyright type checking
+      - name: Pytest execution
         run: uv run pytest
 
   repo-linter:
