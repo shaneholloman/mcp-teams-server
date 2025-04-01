@@ -1,4 +1,4 @@
-== Release process
+### Release process
 
 Review and integrate desired works and PRs into master branch before launching a release.
 
