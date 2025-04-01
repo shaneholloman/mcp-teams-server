@@ -1,11 +1,10 @@
 name: Release
 
 on:
-  workflow_dispatch:
   pull_request:
-    types:
-      - closed
+    types: [ closed ]
     branches: [ $default-branch ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
