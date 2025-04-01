@@ -5,7 +5,6 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from importlib import metadata
-from typing import Optional
 
 from azure.identity.aio import ClientSecretCredential
 from botbuilder.integration.aiohttp import (

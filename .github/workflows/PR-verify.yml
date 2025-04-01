@@ -3,12 +3,14 @@ name: Pull Request verification
 on:
   pull_request:
 
-
 jobs:
   check-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install UV
         uses: astral-sh/setup-uv@v3
@@ -25,6 +27,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install UV
         uses: astral-sh/setup-uv@v3
@@ -41,6 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Install UV
         uses: astral-sh/setup-uv@v3
@@ -52,3 +60,43 @@ jobs:
 
       - name: Pyright type checking
         run: uv run pytest
+
+  repo-linter:
+    name: Repo Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Execute Repo Linter
+        run: |
+          echo "Installing Repo Linter"
+          npm install -g repolinter@v0.11.2
+          
+          echo "Executing Repo Linter"
+          repolinter --rulesetFile repolinter.json --dryRun .
+          
+          echo "Repo Linter execution completed"
+
+
+  reuse-compliance:
+    name: REUSE Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: REUSE Compliance Check
+        uses: fsfe/reuse-action@v5
+
