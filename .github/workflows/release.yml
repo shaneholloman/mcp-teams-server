@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged && contains(github.event.pull_request.labels.*.name, 'kind/release') }}
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - name: Checkout
