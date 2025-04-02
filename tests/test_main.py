@@ -22,3 +22,9 @@ def test_main_should_exit_error_on_missing_env_vars():
 
     assert exit_code.type is SystemExit
     assert exit_code.value.code == 1
+
+@pytest.mark.asyncio
+async def test_list_tools():
+    tools = await mcp_teams_server.mcp.list_tools()
+
+    assert tools is not None
