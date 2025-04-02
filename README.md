@@ -2,6 +2,8 @@
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_mcp-teams-server&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=InditexTech_mcp-teams-server)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_mcp-teams-server&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=InditexTech_mcp-teams-server)
 ![GitHub License](https://img.shields.io/github/license/InditexTech/mcp-teams-server)
+![GitHub Release](https://img.shields.io/github/v/release/InditexTech/mcp-teams-server)
+
 
 
 # MCP Teams Server
