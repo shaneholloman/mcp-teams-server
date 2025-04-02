@@ -187,13 +187,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="MCP Teams Server to allow Microsoft Teams interaction"
     )
+
+    default_transport = os.environ.get("MCP_TRANSPORT", "stdio")
+
     parser.add_argument(
         "-t",
         "--transport",
         nargs=1,
         type=str,
         help="MCP Server Transport: stdio or sse",
-        default="stdio",
+        default=default_transport,
         choices=["stdio", "sse"],
     )
 

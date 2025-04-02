@@ -10,8 +10,11 @@ LABEL \
   org.opencontainers.image.description="MCP Teams Server container image" \
   org.opencontainers.image.licenses="Apache-2.0"
 
+# Settings for faster container start
+ENV UV_COMPILE_BYTECODE=0 UV_PYTHON_DOWNLOADS=0 UV_LINK_MODE=copy
+
 ADD . /app
 WORKDIR /app
-RUN uv sync --frozen
+RUN uv sync --frozen --no-dev
 
-CMD ["uv", "run", "mcp-teams-server"]
+CMD ["uv", "run", "--frozen", "--no-dev", "mcp-teams-server"]

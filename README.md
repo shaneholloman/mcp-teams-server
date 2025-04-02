@@ -143,6 +143,10 @@ docker build . -t InditexTech/mcp-teams-server
 docker run -it InditexTech/mcp-teams-server
 ```
 
+```bash
+docker run --env-file .env -it InditexTech/mcp-teams-server
+```
+
 ### Setup Claude desktop to use docker image
 
 ```yaml
