@@ -11,6 +11,7 @@ path = [
     "*.md",
     ".python-version",
     "repolinter.json",
+    "glama.json",
     "REUSE.toml",
     "pyproject.toml",
     "Dockerfile",
