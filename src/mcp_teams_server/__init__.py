@@ -37,7 +37,7 @@ load_dotenv()
 
 # Config logging
 logging.basicConfig(
-    level=logging.ERROR,
+    level=os.environ.get("MCP_LOGLEVEL", "ERROR"),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stderr),
@@ -86,7 +86,19 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     yield AppContext(client=client)
 
 
-mcp = FastMCP("mcp-teams-server", lifespan=app_lifespan)
+mcp = FastMCP(
+    "mcp-teams-server",
+    lifespan=app_lifespan,
+    dependencies=[
+        "aiohttp",
+        "asyncio",
+        "botbuilder-core",
+        "botbuilder-integration-aiohttp",
+        "dotenv",
+        "msgraph-sdk",
+        "multidict",
+    ],
+)
 
 
 def _get_teams_client(ctx: Context) -> TeamsClient:
