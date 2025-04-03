@@ -14,10 +14,7 @@ read messages, create messages, reply to messages, mention members.
 
 ## Features
 
-
-| Start thread | Reply on thread | Read message and reply                                                           |
-|--------------|-----------------|----------------------------------------------------------------------------------|
-| https://github.com/user-attachments/assets/1e3cb5d5-da35-4579-9691-9202d48b96c5 | https://github.com/user-attachments/assets/45f828d9-69ab-4a2e-b1e4-953b49b4b50a | https://github.com/user-attachments/assets/375533d7-304f-4703-8e08-f267461db2cf  |
+https://github.com/user-attachments/assets/548a9768-1119-4a2d-bd5c-6b41069fc522
 
 - Start thread in channel with title and contents, mentioning users
 - Update existing threads with message replies, mentioning users
