@@ -14,6 +14,12 @@ read messages, create messages, reply to messages, mention members.
 
 ## Features
 
+https://github.com/user-attachments/assets/1e3cb5d5-da35-4579-9691-9202d48b96c5
+
+https://github.com/user-attachments/assets/45f828d9-69ab-4a2e-b1e4-953b49b4b50a
+
+https://github.com/user-attachments/assets/375533d7-304f-4703-8e08-f267461db2cf
+
 | Start thread | Reply on thread | Read message and reply |
 |---|---|---|
 | ![Demo first task](./doc/images/claude_first_task.gif) | ![Demo second task](./doc/images/claude_second_task.gif) | ![Demo third task](./doc/images/claude_third_task.gif) |
