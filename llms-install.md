@@ -22,12 +22,12 @@ Sample docker setup:
 ```yaml
 {
   "mcpServers": {
-    "teams": {
+    "msteams": {
       "command": "docker",
       "args": [
         "run",
-        "-i"
-        "--rm"
+        "-i",
+        "--rm",
         "-e",
         "TEAMS_APP_ID",
         "-e",
@@ -92,7 +92,7 @@ Sample local development setup:
 ```yaml
 {
   "mcpServers": {
-    "teams": {
+    "msteams": {
       "command": "uv",
       "args": [
         "run",
