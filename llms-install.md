@@ -22,12 +22,12 @@ Sample docker setup:
 ```yaml
 {
   "mcpServers": {
-    "teams": {
+    "msteams": {
       "command": "docker",
       "args": [
         "run",
-        "-i"
-        "--rm"
+        "-i",
+        "--rm",
         "-e",
         "TEAMS_APP_ID",
         "-e",
@@ -40,7 +40,7 @@ Sample docker setup:
         "TEAM_ID",
         "-e",
         "TEAMS_CHANNEL_ID",
-        "ghcr.io/InditexTech/mcp-teams-server"
+        "ghcr.io/inditextech/mcp-teams-server"
       ],
       "env": {
         "TEAMS_APP_ID": "<fill_me_with_proper_uuid>",
@@ -74,7 +74,7 @@ Sample Cline setup with docker through WSL (Windows only):
         "run",
         "-i",
         "--rm",
-        "ghcr.io/InditexTech/mcp-teams-server"
+        "ghcr.io/inditextech/mcp-teams-server"
       ],
       "env": {
         "DOCKER_HOST": "unix:///var/run/docker.sock"
@@ -92,7 +92,7 @@ Sample local development setup:
 ```yaml
 {
   "mcpServers": {
-    "teams": {
+    "msteams": {
       "command": "uv",
       "args": [
         "run",
