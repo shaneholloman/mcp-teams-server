@@ -95,7 +95,6 @@ class TeamsClient:
     async def on_turn_error(context: TurnContext, error: Exception):
         LOGGER.error(f"Error {str(error)}")
         # await context.send_activity("An error occurred in the bot, please try again later")
-        pass
 
     def _create_conversation_reference(self) -> ConversationReference:
         service_url = "https://smba.trafficmanager.net/emea/"
