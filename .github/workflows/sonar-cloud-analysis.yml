@@ -54,6 +54,7 @@ jobs:
 
       - name: Store project information
         shell: bash
+        id: version
         run: |
           VERSION=$(uv run pyproject-info project.version | tr -d '"'); echo "app-version=$VERSION" >> "$GITHUB_OUTPUT"
           NAME=$(uv run pyproject-info project.name | tr -d '"'); echo "app-name=$NAME" >> "$GITHUB_OUTPUT"
