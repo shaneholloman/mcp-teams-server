@@ -12,20 +12,17 @@ An MCP ([Model Context Protocol](https://modelcontextprotocol.io/introduction)) 
 [Microsoft Teams](https://www.microsoft.com/en-us/microsoft-teams/group-chat-software/) integration, providing capabilities to 
 read messages, create messages, reply to messages, mention members.
 
-
 ## Features
+
+| Start thread | Reply on thread | Read message and reply |
+|---|---|---|
+| ![Demo first task](./doc/images/claude_first_task.gif) | ![Demo second task](./doc/images/claude_second_task.gif) | ![Demo third task](./doc/images/claude_third_task.gif) |
 
 - Start thread in channel with title and contents, mentioning users
 - Update existing threads with message replies, mentioning users
 - Read thread replies
 - List channel team members
 - Read channel messages
-
-![Demo first task](./doc/images/claude_first_task.gif)
-
-![Demo second task](./doc/images/claude_second_task.gif)
-
-![Demo third task](./doc/images/claude_third_task.gif)
 
 ## Prerequisites
 
@@ -115,6 +112,10 @@ docker run --env-file .env -it InditexTech/mcp-teams-server
 
 Please follow instructions on the [following document](./llms-install.md)
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull
@@ -129,8 +130,3 @@ For security concerns, please see our [Security Policy](SECURITY.md).
 This project is licensed under the [Apache-2.0](LICENSE.txt) file for details.
 
 © 2025 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes and version history.
-
