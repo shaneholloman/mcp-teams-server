@@ -12,7 +12,7 @@ An MCP ([Model Context Protocol](https://modelcontextprotocol.io/introduction)) 
 [Microsoft Teams](https://www.microsoft.com/en-us/microsoft-teams/group-chat-software/) integration, providing capabilities to 
 read messages, create messages, reply to messages, mention members.
 
-|   |   |   |
+| Start thread | Reply on thread | Read message and reply |
 |---|---|---|
 | ![Demo first task](./doc/images/claude_first_task.gif) | ![Demo second task](./doc/images/claude_second_task.gif) | ![Demo third task](./doc/images/claude_third_task.gif) |
 
