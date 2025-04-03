@@ -13,7 +13,7 @@ LABEL \
 # Settings for faster container start
 ENV UV_COMPILE_BYTECODE=0 UV_PYTHON_DOWNLOADS=0 UV_LINK_MODE=copy
 
-ADD . /app
+COPY . /app
 WORKDIR /app
 RUN uv sync --frozen --no-dev
 

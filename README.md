@@ -89,7 +89,7 @@ uv run pytest -m integration
 A docker image is available to run MCP server:
 
 ```bash
-docker build . -t InditexTech/mcp-teams-server
+docker build . -t inditextech/mcp-teams-server
 ```
 
 ### Run docker image
@@ -97,13 +97,13 @@ docker build . -t InditexTech/mcp-teams-server
 Basic run configuration:
 
 ```bash
-docker run -it InditexTech/mcp-teams-server
+docker run -it inditextech/mcp-teams-server
 ```
 
 Run with environment variables from .env file:
 
 ```bash
-docker run --env-file .env -it InditexTech/mcp-teams-server
+docker run --env-file .env -it inditextech/mcp-teams-server
 ```
 
 ### Setup LLM to use MCP Teams Server
