@@ -14,6 +14,7 @@ path = [
     "glama.json",
     "REUSE.toml",
     "pyproject.toml",
+    "NOTICE",
     "Dockerfile",
     "doc/**",
     "app/*",
