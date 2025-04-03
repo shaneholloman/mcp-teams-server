@@ -14,9 +14,7 @@ read messages, create messages, reply to messages, mention members.
 
 ## Features
 
-| Start thread | Reply on thread | Read message and reply |
-|---|---|---|
-| ![Demo first task](./doc/images/claude_first_task.gif) | ![Demo second task](./doc/images/claude_second_task.gif) | ![Demo third task](./doc/images/claude_third_task.gif) |
+https://github.com/user-attachments/assets/548a9768-1119-4a2d-bd5c-6b41069fc522
 
 - Start thread in channel with title and contents, mentioning users
 - Update existing threads with message replies, mentioning users
