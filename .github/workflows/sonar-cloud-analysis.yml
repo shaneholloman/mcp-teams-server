@@ -37,10 +37,10 @@ jobs:
         run: uv sync --frozen --all-extras --dev --python 3.10
 
       - name: Unit tests execution
-        run: uv run pytest
+        run: uv run pytest --cov-report term --cov-report xml:coverage-unit.xml --cov=.
 
       - name: Integration tests execution
-        run: uv run pytest -m integration
+        run: uv run pytest -m integration --cov-report term --cov-report xml:coverage-integration.xml --cov=.
         env:
           TEAMS_APP_ID: ${{ vars.TEAMS_APP_ID }}
           TEAMS_APP_PASSWORD: ${{ secrets.TEAMS_APP_PASSWORD }}
@@ -76,3 +76,5 @@ jobs:
             -Dsonar.host.url="https://sonarcloud.io/"
             -Dsonar.verbose=true
             -Dsonar.token=${SONAR_TOKEN}
+            -Dsonar.python.version=3.10
+            -Dsonar.python.coverage.reportPaths=coverage*.xml
