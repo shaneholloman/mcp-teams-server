@@ -28,6 +28,8 @@ Bot will be allowed to interact with Teams Channel:
 
 ![Azure Bot Channels](./images/azure_bot_channels.png)
 
+You will not need to deploy a Bot application because this MCP server uses Azure Bot Framework as a client to Bot Framework api.
+
 ### Microsoft application publishing
 
 Create an application for Microsoft Teams

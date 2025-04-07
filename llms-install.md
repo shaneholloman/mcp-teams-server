@@ -17,6 +17,13 @@ MCP Teams Server is a communication tool that allows AI assistants to interact w
 
 Add the MCP server configuration to your MCP settings file based on your LLM client.
 
+Remember there is a [pre-built image](https://github.com/InditexTech/mcp-teams-server/pkgs/container/mcp-teams-server) hosted in ghcr.io.
+You can install this image by running the following command
+
+```commandline
+docker pull ghcr.io/inditextech/mcp-teams-server:latest
+```
+
 Sample docker setup:
 
 ```yaml
