@@ -1,5 +1,8 @@
 # PR Checklist
 
+**Friendly reminder**: please read [CONTRIBUTING.md](../CONTRIBUTING.md#prerequisites), specially CLA in case you are
+a contributor and not a maintainer.
+
 Please check if your PR fulfills the following requirements:
 
 - [ ] Tests for the changes have been added (for bug fixes / features)
