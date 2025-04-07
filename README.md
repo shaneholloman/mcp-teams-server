@@ -84,9 +84,18 @@ Integration tests require the set-up the following environment variables:
 uv run pytest -m integration
 ```
 
+### Pre-built docker image
+
+There is a [pre-built image](https://github.com/InditexTech/mcp-teams-server/pkgs/container/mcp-teams-server) hosted in ghcr.io.
+You can install this image by running the following command
+
+```commandline
+docker pull ghcr.io/inditextech/mcp-teams-server:latest
+```
+
 ### Build docker image
 
-A docker image is available to run MCP server:
+A docker image is available to run MCP server. You can build it with the following command:
 
 ```bash
 docker build . -t inditextech/mcp-teams-server
