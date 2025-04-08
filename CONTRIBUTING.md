@@ -64,4 +64,28 @@ It is recommended to run a type checker:
 uv run pyright
 ```
 
+## Technical details
+
+This MCP is built using [MCP SDK](https://github.com/modelcontextprotocol/python-sdk) for Python from Anthropic.
+It uses FastMCP to implement tools offered by the MCP server.
+
+This MCP server consumes two Microsoft APIs / frameworks:
+
+- [Azure Bot Builder](https://github.com/microsoft/botbuilder-python) for python
+- [Microsoft Graph SDK](https://github.com/microsoftgraph/msgraph-sdk-python) for python
+
+Azure Bot Builder allows a bot (Microsoft Entra ID app) to consume a Microsoft REST API to send messages to channels 
+(but it is not capable of consuming messages because the bot is not deployed in Azure). The REST API client is 
+encapsulated inside the framework classes, and it is not used directly.
+In order to send messages without actually being deployed in Azure, the bot "continues" a conversation to retrieve 
+the TurnContext instance and perform actions on "activities". This technique is called 
+[proactive messaging](https://learn.microsoft.com/en-us/microsoftteams/platform/bots/how-to/conversations/send-proactive-messages?tabs=python)
+
+Replying to messages through bot builder is not possible without the help of 
+[this hack](https://github.com/microsoft/botframework-sdk/issues/6626), because the bot builder framework 
+is not ready for this use (although the internal REST API allows it, and it works like a charm).
+
+Azure Bot Builder allows to perform any write operation, but reading messages or previous threads is not possible 
+without a special "migration" permission. Because of that, we have preferred to use Microsoft Graph to read messages.
+Microsoft Application Entra ID must have been granted permissions to read messages in a channel.
 
