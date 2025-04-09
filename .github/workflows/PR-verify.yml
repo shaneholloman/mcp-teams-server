@@ -1,4 +1,6 @@
 name: Pull Request verification
+permissions:
+  contents: read
 
 on:
   pull_request:
