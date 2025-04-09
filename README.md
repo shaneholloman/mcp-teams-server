@@ -3,8 +3,8 @@
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_mcp-teams-server&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=InditexTech_mcp-teams-server)
 ![GitHub License](https://img.shields.io/github/license/InditexTech/mcp-teams-server)
 ![GitHub Release](https://img.shields.io/github/v/release/InditexTech/mcp-teams-server)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/InditexTech/mcp-teams-server/badge)](https://scorecard.dev/viewer/?uri=github.com/InditexTech/mcp-teams-server)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10400/badge)](https://www.bestpractices.dev/projects/10400)
-
 
 
 
