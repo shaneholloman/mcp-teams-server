@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2025 INDUSTRIA DE DISEÑO TEXTIL, S.A. (INDITEX, S.A.)
 # SPDX-License-Identifier: Apache-2.0
 import logging
-from uuid import UUID
 
 from botbuilder.core import BotAdapter, TurnContext
 from botbuilder.core.teams import TeamsInfo
@@ -17,7 +16,6 @@ from botbuilder.schema import (
 from botbuilder.schema.teams import TeamsChannelAccount
 from botframework.connector.aio.operations_async import ConversationsOperations
 from kiota_abstractions.base_request_configuration import RequestConfiguration
-from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.models.chat_message import ChatMessage
 from msgraph.generated.teams.item.channels.item.messages.item.chat_message_item_request_builder import (
     ChatMessageItemRequestBuilder,
@@ -67,10 +65,6 @@ class PagedTeamsMessages(BaseModel):
 
 
 class TeamsClient:
-    #
-    # https://learn.microsoft.com/en-us/graph/permissions-reference#resource-specific-consent-rsc-permissions
-    # ChannelMessage.Read.Group
-    CHANNEL_MESSAGE_READ_GROUP: str = "19103a54-c397-4bcd-be5a-ef111e0406fa"
 
     def __init__(
         self,
@@ -287,19 +281,6 @@ class TeamsClient:
         except Exception as e:
             LOGGER.error(f"Error updating thread: {str(e)}")
             raise
-
-    async def _grant_channel_group_read(self) -> AppRoleAssignment | None:
-        # https://learn.microsoft.com/en-us/graph/permissions-grant-via-msgraph?tabs=python&pivots=grant-application-permissions
-        request = AppRoleAssignment(
-            principal_id=UUID(self.teams_app_id),
-            resource_id=UUID(self.team_id),
-            app_role_id=UUID(TeamsClient.CHANNEL_MESSAGE_READ_GROUP),
-        )
-        result = await self.graph_client.service_principals.by_service_principal_id(
-            self.teams_app_id
-        ).app_role_assigned_to.post(request)
-        LOGGER.info(f"Granted app role {result}")
-        return result
 
     async def read_threads(
         self, limit: int = 50, cursor: str | None = None
