@@ -1,4 +1,6 @@
 name: Sonar Cloud Analysis
+permissions:
+  contents: read
 
 concurrency:
   group: sonarcloud-${{ github.ref }}
@@ -62,6 +64,7 @@ jobs:
 
       - name: SonarCloud / Run SonarCloud action
         uses: SonarSource/sonarqube-scan-action@aa494459d7c39c106cc77b166de8b4250a32bb97 # v5
+        if: ${{ env.IS_INDITEXTECH_REPO == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

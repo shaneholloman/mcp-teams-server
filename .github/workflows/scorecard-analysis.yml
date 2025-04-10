@@ -1,10 +1,10 @@
 name: Scorecard analysis workflow
+permissions: read-all
 on:
   push:
     # Only the default branch is supported.
     branches: [ 'master' ]
 
-permissions: read-all
 
 jobs:
   analysis:
