@@ -1,4 +1,4 @@
-_## Teams configuration
+## Teams configuration
 
 ### Application registration
 
@@ -18,7 +18,7 @@ set **TEAMS_APP_TYPE** to SingleTenant.
 During development of this MCP Server we used SingleTenant authentication for our demo application 
 with client secret credentials.
 
-![Client Secret Credentials](./images/azure_app_client_credentials.png)_
+![Client Secret Credentials](./images/azure_app_client_credentials.png)
 
 It is also necessary to setup Microsoft Graph API "ChannelMessage.Read.All" permission. 
 This permission is a "Resource Specific Consent" and can be scoped to the team or group where the teams 
@@ -28,7 +28,7 @@ application (explained later) is installed.
 
 ### Azure Bot registration
 
-After registering the Microsoft Entra ID application, you will need to [register an azure bot](https://learn.microsoft.com/en-us/azure/bot-service/bot-service-quickstart-registration?view=azure-bot-service-4.0&tabs=singletenant). ç
+After registering the Microsoft Entra ID application, you will need to [register an azure bot](https://learn.microsoft.com/en-us/azure/bot-service/bot-service-quickstart-registration?view=azure-bot-service-4.0&tabs=singletenant). 
 The bot will be set with the **TEAMS_APP_ID** existing registration.
 
 ![Azure Bot Configuration](./images/azure_bot_configuration.png)
