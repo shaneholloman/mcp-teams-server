@@ -11,7 +11,8 @@ from botbuilder.schema import (
     ChannelAccount,
     ConversationAccount,
     ConversationReference,
-    Mention, TextFormatTypes,
+    Mention,
+    TextFormatTypes,
 )
 from botbuilder.schema.teams import TeamsChannelAccount
 from botframework.connector.aio.operations_async import ConversationsOperations
@@ -65,7 +66,6 @@ class PagedTeamsMessages(BaseModel):
 
 
 class TeamsClient:
-
     def __init__(
         self,
         adapter: CloudAdapter,
@@ -146,7 +146,9 @@ class TeamsClient:
 
                 mentions = []
                 if mention_member is not None:
-                    result.content = f"# **{title}**\n<at>{mention_member.name}</at> {content}"
+                    result.content = (
+                        f"# **{title}**\n<at>{mention_member.name}</at> {content}"
+                    )
                     mention = Mention(
                         text=f"<at>{mention_member.name}</at>",
                         type="mention",
