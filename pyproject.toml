@@ -1,6 +1,6 @@
 [project]
 name = "mcp-teams-server"
-version = "1.0.5"
+version = "1.0.6"
 description = "An MCP server implementation for Microsoft Teams integration"
 readme = "README.md"
 keywords = ["mcp", "llm", "automation", "Microsoft Teams"]
@@ -16,9 +16,9 @@ dependencies = [
     "botbuilder-core>=4.17.0",
     "botbuilder-integration-aiohttp>=4.17.0",
     "dotenv>=0.9.9",
-    "mcp[cli]>=1.9.1",
-    "msgraph-sdk>=1.31.0",
-    "multidict>=6.4.4",
+    "mcp[cli]>=1.12.0",
+    "msgraph-sdk>=1.37.0",
+    "multidict>=6.6.3",
 ]
 
 [project.urls]
